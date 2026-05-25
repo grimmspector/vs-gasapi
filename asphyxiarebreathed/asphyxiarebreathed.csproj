@@ -5,11 +5,12 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>AsphyxiaRebreathed</RootNamespace>
     <AssemblyName>asphyxiarebreathed</AssemblyName>
-    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <OutputPath>bin\$(Configuration)\Mods\mod</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
   <PropertyGroup>
+    <VintageStoryPath Condition="'$(VintageStoryPath)' == '' and '$(VINTAGE_STORY)' != ''">$(VINTAGE_STORY)</VintageStoryPath>
     <VintageStoryPath Condition="'$(VintageStoryPath)' == ''">$(AppData)\Vintagestory</VintageStoryPath>
   </PropertyGroup>
 
@@ -49,7 +50,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Properties\launchSettings.json" />
     <Content Include="modinfo.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="assets\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
+

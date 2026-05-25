@@ -1,0 +1,37 @@
+# Build output
+Build/
+bin/
+obj/
+CakeBuild/bin/
+CakeBuild/obj/
+asphyxiarebreathed/bin/
+asphyxiarebreathed/obj/
+asphyxiarebreathed/assets/asphyxiarebreathed/moddb/
+*.dll
+*.pdb
+*.deps.json
+*.zip
+Releases/
+
+# Visual Studio and .NET local state
+.vs/
+.vs.backup-*/
+.dotnetcli/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+.agents/
+AGENTS.local.md
+
+# Local logs and temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+*.swp
+Thumbs.db
+Desktop.ini
+
