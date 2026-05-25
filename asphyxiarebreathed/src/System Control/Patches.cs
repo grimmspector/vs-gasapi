@@ -90,7 +90,7 @@ namespace AsphyxiaRebreathed
 
         [HarmonyPatch("CreateExplosion")]
         [HarmonyPrefix]
-        static void GasSetup(BlockPos pos, EnumBlastType blastType, double destructionRadius, double injureRadius, ServerMain __instance)
+        static void GasSetup(BlockPos pos, double destructionRadius, ServerMain __instance)
         {
             //Register this explosion
             GasSystem gasHandler = __instance.Api.ModLoader.GetModSystem<GasSystem>();
@@ -102,7 +102,7 @@ namespace AsphyxiaRebreathed
 
         [HarmonyPatch("CreateExplosion")]
         [HarmonyPostfix]
-        static void GasSpread(BlockPos pos, EnumBlastType blastType, double destructionRadius, double injureRadius, ServerMain __instance)
+        static void GasSpread(BlockPos pos, ServerMain __instance)
         {
             GasSystem gasHandler = __instance.Api.ModLoader.GetModSystem<GasSystem>();
 
@@ -112,7 +112,7 @@ namespace AsphyxiaRebreathed
         }
     }
 
-    [HarmonyPatch(typeof(BlockEntityContainer))]
+    [HarmonyPatch(typeof(InWorldContainer))]
     public class ContainerBonus
     {
         [HarmonyPrepare]
@@ -132,9 +132,9 @@ namespace AsphyxiaRebreathed
 
         [HarmonyPatch("GetPerishRate")]
         [HarmonyPostfix]
-        static void AirQuality(BlockEntityContainer __instance, ref float __result)
+        static void AirQuality(ICoreAPI ___Api, Vintagestory.GameContent.PositionProviderDelegate ___positionProvider, ref float __result)
         {
-            float airQuality = __instance.Api.ModLoader.GetModSystem<GasSystem>().GetAirAmount(__instance.Pos);
+            float airQuality = ___Api.ModLoader.GetModSystem<GasSystem>().GetAirAmount(___positionProvider());
 
             if (airQuality >= 0) return;
 

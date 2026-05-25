@@ -9,9 +9,14 @@ asphyxiarebreathed/obj/
 asphyxiarebreathed/assets/asphyxiarebreathed/moddb/
 *.dll
 *.pdb
+*.dbg
+*.mdb
 *.deps.json
 *.zip
 Releases/
+Debug/
+debug/
+debug.log
 
 # Visual Studio and .NET local state
 .vs/
@@ -23,6 +28,7 @@ Releases/
 *.sln.docstates
 
 .agents/
+.tmp/
 AGENTS.local.md
 
 # Local logs and temporary files
