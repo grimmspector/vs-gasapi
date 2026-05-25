@@ -31,7 +31,7 @@ namespace AsphyxiaRebreathed
         IClientNetworkChannel clientChannel;
         static IServerNetworkChannel serverChannel;
 
-        public static Dictionary<string, GasInfo> GasDictionary;
+        public static Dictionary<string, GasInfo> GasDictionary = new Dictionary<string, GasInfo>();
 
         private GasSpreadingThread gasSpreader;
 
@@ -82,15 +82,20 @@ namespace AsphyxiaRebreathed
             api.RegisterBlockEntityBehaviorClass("PlanterAbsorbs", typeof(BlockEntityBehaviorPlanterAbsorbs));
             api.RegisterBlockEntityBehaviorClass("ProduceGas", typeof(BlockEntityBehaviorProduceGas));
 
-            IAsset asset = api.Assets.Get("asphyxiarebreathed:config/gases.json");
-            GasDictionary = asset.ToObject<Dictionary<string, GasInfo>>();
-            if (GasDictionary == null) GasDictionary = new Dictionary<string, GasInfo>();
-
             GasSpreadBlockRadius = getBlockInRadius(GasConfig.Loaded.DefaultSpreadRadius);
             entityUtil = api.ModLoader.GetModSystem<EntityPartitioning>();
 
             harmony = new Harmony("com.grimm.asphyxiarebreathed");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
+        }
+
+        public override void AssetsLoaded(ICoreAPI api)
+        {
+            base.AssetsLoaded(api);
+
+            IAsset asset = api.Assets.Get("asphyxiarebreathed:config/gases.json");
+            GasDictionary = asset.ToObject<Dictionary<string, GasInfo>>();
+            if (GasDictionary == null) GasDictionary = new Dictionary<string, GasInfo>();
         }
 
         public override void Dispose()

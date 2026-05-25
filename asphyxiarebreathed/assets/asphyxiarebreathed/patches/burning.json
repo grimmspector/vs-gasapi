@@ -121,6 +121,6 @@
       }
     ],
     "condition": { "when": "ARgasesEnabled", "isValue": "true" },
-    "file": "game:blocktypes/clay/oillamp.json"
+    "file": "game:blocktypes/clay/fired/oillamp.json"
   }
 ]

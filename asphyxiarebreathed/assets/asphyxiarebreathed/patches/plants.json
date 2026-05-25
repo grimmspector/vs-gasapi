@@ -7,7 +7,7 @@
         "name": "PlanterAbsorbs"
       }
     ],
-    "file": "game:blocktypes/clay/planter.json",
+    "file": "game:blocktypes/clay/fired/planter.json",
     "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
@@ -18,7 +18,7 @@
         "name": "PlanterAbsorbs"
       }
     ],
-    "file": "game:blocktypes/clay/flowerpot.json",
+    "file": "game:blocktypes/clay/fired/flowerpot.json",
     "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
 
@@ -29,7 +29,7 @@
       "gassysPlant": false
     },
     "condition": { "when": "ARgasesEnabled", "isValue": "true" },
-    "file": "game:blocktypes/plant/glowworms.json"
+    "file": "game:blocktypes/creature/glowworms.json"
   },
   {
     "op": "add",
@@ -59,6 +59,6 @@
       "gassysPlant": true,
     },
     "condition": { "when": "ARgasesEnabled", "isValue": "true" },
-    "file": "game:blocktypes/plant/seaweed.json"
+    "file": "game:blocktypes/plant/aquatic/seaweed.json"
   },
 ]

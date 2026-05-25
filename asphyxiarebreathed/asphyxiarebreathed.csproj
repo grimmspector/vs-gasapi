@@ -5,7 +5,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>AsphyxiaRebreathed</RootNamespace>
     <AssemblyName>asphyxiarebreathed</AssemblyName>
-    <OutputPath>bin\$(Configuration)\Mods\mod</OutputPath>
+    <OutputPath>bin\$(Configuration)\Mods\$(AssemblyName)</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 

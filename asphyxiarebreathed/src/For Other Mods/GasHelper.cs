@@ -19,7 +19,14 @@ namespace AsphyxiaRebreathed
 
         public override void Start(ICoreAPI papi)
         {
-            base.Start(api);
+            base.Start(papi);
+
+            api = papi;
+        }
+
+        public override void AssetsLoaded(ICoreAPI papi)
+        {
+            base.AssetsLoaded(papi);
 
             api = papi;
 
@@ -35,7 +42,7 @@ namespace AsphyxiaRebreathed
             }
         }
 
-        static Dictionary<string, GasInfoLite> LiteGasDict;
+        static Dictionary<string, GasInfoLite> LiteGasDict = new Dictionary<string, GasInfoLite>();
 
         //Returns the gases for the entire chunk; Does not create gases or chunk data
         public Dictionary<int, Dictionary<string, float>> GetGasesForChunk(BlockPos pos)

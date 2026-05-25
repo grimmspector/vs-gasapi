@@ -40,7 +40,7 @@
         "west": true
       }
     },
-    "file": "game:blocktypes/wood/door.json"
+    "file": "game:blocktypes/wood/woodtyped/door.json"
   },
   {
     "op": "add",
@@ -83,7 +83,7 @@
         "west": true
       }
     },
-    "file": "game:blocktypes/metal/irondoor.json"
+    "file": "game:blocktypes/metal/door.json"
   },
   {
     "op": "add",
@@ -132,6 +132,6 @@
         "north": true
       }
     },
-    "file": "game:blocktypes/wood/trapdoor.json"
+    "file": "game:blocktypes/wood/woodtyped/trapdoor.json"
   }
 ]
