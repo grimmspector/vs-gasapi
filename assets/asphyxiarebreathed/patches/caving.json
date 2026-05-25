@@ -6,7 +6,7 @@
       "name": "SparkGas"
     },
     "file": "game:blocktypes/stone/ore-gem.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -15,7 +15,7 @@
       "name": "SparkGas"
     },
     "file": "game:blocktypes/stone/ore-graded.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -24,7 +24,7 @@
       "name": "SparkGas"
     },
     "file": "game:blocktypes/stone/ore-ungraded.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -33,7 +33,7 @@
       "name": "SparkGas"
     },
     "file": "game:blocktypes/stone/rock.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -42,7 +42,7 @@
       {"name": "SparkGas"}
     ],
     "file": "game:blocktypes/stone/stalagsection.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -54,7 +54,7 @@
       }
     },
     "file": "game:blocktypes/stone/rock.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -68,7 +68,7 @@
       }
     ],
     "file": "game:blocktypes/stone/stalagsection.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -86,7 +86,7 @@
       }
     },
     "file": "game:blocktypes/stone/ore-graded.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -103,7 +103,7 @@
       }
     },
     "file": "game:blocktypes/stone/ore-graded.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -122,7 +122,7 @@
       }
     },
     "file": "game:blocktypes/stone/ore-ungraded.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -139,7 +139,7 @@
       }
     },
     "file": "game:blocktypes/stone/ore-ungraded.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -153,6 +153,6 @@
       }
     ],
     "file": "game:blocktypes/stone/saltpeter.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
 ]

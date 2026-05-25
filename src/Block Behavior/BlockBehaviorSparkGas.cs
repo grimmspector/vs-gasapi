@@ -1,8 +1,8 @@
-﻿using Vintagestory.API.Common;
+using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 
-namespace GasApi
+namespace AsphyxiaRebreathed
 {
     public class BlockBehaviorSparkGas : BlockBehavior
     {

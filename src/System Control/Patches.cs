@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +18,7 @@ using Vintagestory.ServerMods;
 using Vintagestory.Server;
 using Vintagestory.ServerMods.NoObf;
 
-namespace GasApi
+namespace AsphyxiaRebreathed
 {
     [HarmonyPatch(typeof(EntitySidedProperties))]
     public class BreatheOverride

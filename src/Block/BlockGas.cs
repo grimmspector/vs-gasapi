@@ -1,11 +1,11 @@
-﻿using Vintagestory.API.Common;
+using Vintagestory.API.Common;
 using Vintagestory.API.Server;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.GameContent;
 using System.Collections.Generic;
 
-namespace GasApi
+namespace AsphyxiaRebreathed
 {
     public class BlockGas: Block
     {
@@ -22,7 +22,7 @@ namespace GasApi
             world.BlockAccessor.SetBlock(0, blockPos);
         }
 
-        public override bool TryPlaceBlockForWorldGen(IBlockAccessor blockAccessor, BlockPos pos, BlockFacing onBlockFace, LCGRandom worldgenRandom)
+        public override bool TryPlaceBlockForWorldGen(IBlockAccessor blockAccessor, BlockPos pos, BlockFacing onBlockFace, IRandom worldgenRandom, BlockPatchAttributes attributes = null)
         {
             Dictionary<string, float> tester = new Dictionary<string, float>();
             tester.Add(FirstCodePart(1), 1);

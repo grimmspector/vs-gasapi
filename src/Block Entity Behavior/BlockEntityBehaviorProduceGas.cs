@@ -1,4 +1,4 @@
-﻿using Vintagestory.API.Common;
+using Vintagestory.API.Common;
 using Vintagestory.GameContent;
 using Vintagestory.API;
 using Vintagestory.API.MathTools;
@@ -6,7 +6,7 @@ using Vintagestory.API.Datastructures;
 using System.Collections.Generic;
 using Vintagestory.API.Server;
 
-namespace GasApi
+namespace AsphyxiaRebreathed
 {
     public class BlockEntityBehaviorProduceGas : BlockEntityBehavior
     {

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
@@ -7,7 +7,7 @@ using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.GameContent;
 
-namespace GasApi
+namespace AsphyxiaRebreathed
 {
     public class EntityBehaviorGas : EntityBehavior
     {
@@ -92,11 +92,11 @@ namespace GasApi
 
         public bool HasFire()
         {
-            if (LeftHand != null && LeftHand.Collectible is BlockTorch && LeftHand.Block.LightHsv?[2] > 0) return true;
+            if (LeftHand != null && LeftHand.Collectible is BlockTorch && LeftHand.Block.LightHsv[2] > 0) return true;
 
-            if (RightHand != null && RightHand.Collectible is BlockTorch && RightHand.Block.LightHsv?[2] > 0) return true;
+            if (RightHand != null && RightHand.Collectible is BlockTorch && RightHand.Block.LightHsv[2] > 0) return true;
 
-            if (SelfStack != null && SelfStack.Collectible is BlockTorch && SelfStack.Block.LightHsv?[2] > 0) return true;
+            if (SelfStack != null && SelfStack.Collectible is BlockTorch && SelfStack.Block.LightHsv[2] > 0) return true;
 
             return false;
         }

@@ -1,4 +1,4 @@
-﻿using Vintagestory.API.Common;
+using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API;
 using Vintagestory.API.Common.Entities;
@@ -8,10 +8,16 @@ using System;
 using Vintagestory.API.Config;
 using System.Linq;
 
-namespace GasApi
+namespace AsphyxiaRebreathed
 {
     public class EntityBehaviorAir : EntityBehavior
     {
+        const string OxygenTreeName = "oxygen";
+        const string LegacyAirTreeName = "air";
+        const string CurrentOxygenKey = "currentoxygen";
+        const string MaxOxygenKey = "maxoxygen";
+        const string BaseMaxOxygenKey = "basemaxoxygen";
+
         ITreeAttribute airTree;
         GasSystem atmosphere;
 
@@ -28,23 +34,32 @@ namespace GasApi
 
         public float Air
         {
-            get { return airTree.GetFloat("currentair"); }
-            set { airTree.SetFloat("currentair", GameMath.Clamp(value, 0, MaxAir)); entity.WatchedAttributes.MarkPathDirty("air"); }
+            get { return airTree.GetFloat(CurrentOxygenKey); }
+            set
+            {
+                airTree.SetFloat(CurrentOxygenKey, GameMath.Clamp(value, 0, MaxAir));
+                airTree.SetBool("hasair", Air > 0);
+                entity.WatchedAttributes.MarkPathDirty(OxygenTreeName);
+            }
         }
 
         public float MaxAir
         {
-            get { return airTree.GetFloat("maxair"); }
-            set { airTree.SetFloat("maxair", value); entity.WatchedAttributes.MarkPathDirty("air"); }
+            get { return airTree.GetFloat(MaxOxygenKey); }
+            set
+            {
+                airTree.SetFloat(MaxOxygenKey, value);
+                entity.WatchedAttributes.MarkPathDirty(OxygenTreeName);
+            }
         }
 
         public float BaseMaxAir
         {
-            get { return airTree.GetFloat("basemaxair"); }
+            get { return airTree.GetFloat(BaseMaxOxygenKey); }
             set
             {
-                airTree.SetFloat("basemaxair", value);
-                entity.WatchedAttributes.MarkPathDirty("air");
+                airTree.SetFloat(BaseMaxOxygenKey, value);
+                entity.WatchedAttributes.MarkPathDirty(OxygenTreeName);
             }
         }
 
@@ -61,26 +76,40 @@ namespace GasApi
             atmosphere = entity.Api.ModLoader.GetModSystem<GasSystem>();
             timer = entity.World.Calendar.TotalHours;
             waterBreather = typeAttributes.IsTrue("waterBreather");
-            airTree = entity.WatchedAttributes.GetTreeAttribute("air");
+            airTree = entity.WatchedAttributes.GetTreeAttribute(OxygenTreeName);
 
             if (airTree == null)
             {
-                entity.WatchedAttributes.SetAttribute("air", airTree = new TreeAttribute());
+                airTree = entity.WatchedAttributes.GetTreeAttribute(LegacyAirTreeName);
+                entity.WatchedAttributes.SetAttribute(OxygenTreeName, airTree = ConvertLegacyAirTree(airTree));
 
-                Air = typeAttributes["currentair"].AsFloat(15);
-                BaseMaxAir = typeAttributes["maxair"].AsFloat(15);
+                if (Air <= 0) Air = typeAttributes[CurrentOxygenKey].AsFloat(typeAttributes["currentair"].AsFloat(15));
+                BaseMaxAir = typeAttributes[MaxOxygenKey].AsFloat(typeAttributes["maxair"].AsFloat(15));
                 InSystem = new string[0];
                 UpdateMaxAir();
                 return;
             }
 
-            Air = airTree.GetFloat("currentair");
-            BaseMaxAir = airTree.GetFloat("basemaxair");
+            Air = airTree.GetFloat(CurrentOxygenKey);
+            BaseMaxAir = airTree.GetFloat(BaseMaxOxygenKey);
 
-            if (BaseMaxAir == 0) BaseMaxAir = typeAttributes["maxair"].AsFloat(15);
+            if (BaseMaxAir == 0) BaseMaxAir = typeAttributes[MaxOxygenKey].AsFloat(typeAttributes["maxair"].AsFloat(15));
 
 
             UpdateMaxAir();
+        }
+
+        private TreeAttribute ConvertLegacyAirTree(ITreeAttribute legacyTree)
+        {
+            TreeAttribute oxygenTree = new TreeAttribute();
+
+            if (legacyTree == null) return oxygenTree;
+
+            oxygenTree.SetFloat(CurrentOxygenKey, legacyTree.GetFloat("currentair"));
+            oxygenTree.SetFloat(MaxOxygenKey, legacyTree.GetFloat("maxair"));
+            oxygenTree.SetFloat(BaseMaxOxygenKey, legacyTree.GetFloat("basemaxair"));
+
+            return oxygenTree;
         }
 
         public void UpdateMaxAir()
@@ -187,9 +216,9 @@ namespace GasApi
             float mult = atmosphere.GetAirAmount(head);
             bool solid = true;
 
-            foreach (bool face in gas.SideSolid)
+            foreach (BlockFacing face in BlockFacing.ALLFACES)
             {
-                solid &= face;
+                solid &= gas.SideSolid[face.Index];
             }
 
             if (solid) return -1f * entity.Stats.GetBlended("airLoss") * air;
@@ -280,21 +309,15 @@ namespace GasApi
             if (!(entity is EntityPlayer)) return false;
 
             IPlayerInventoryManager inv = (entity as EntityPlayer)?.Player.InventoryManager;
-            ItemStack mask = inv.GetOwnInventory(GlobalConstants.characterInvClassName)?[(int)EnumCharacterDressType.Face].Itemstack;
+            ItemSlot maskSlot = GetCharacterSlot(EnumCharacterDressType.Face);
+            ItemStack mask = maskSlot?.Itemstack;
 
             if (mask == null || mask.Collectible.GetDurability(mask) <= 0 || mask.ItemAttributes == null) return false;
 
             if (GasConfig.Loaded.AllowScuba && mask.ItemAttributes.IsTrue("gassysScubaMask"))
             {
-                IInventory backpacks = inv.GetOwnInventory(GlobalConstants.backpackInvClassName);
-                if (backpacks != null && backpacks.Count >= 6)
-                {
-                    ItemStack gastank = backpacks[5].Itemstack;
-                    if (gastank != null && gastank.ItemAttributes != null && gastank.ItemAttributes.IsTrue("gassysScubaTank") && gastank.Collectible.GetDurability(gastank) > 0)
-                    {
-                        return true;
-                    }
-                }
+                ItemStack gastank = GetScubaTankSlot()?.Itemstack;
+                if (gastank != null && gastank.ItemAttributes != null && gastank.ItemAttributes.IsTrue("gassysScubaTank") && gastank.Collectible.GetDurability(gastank) > 0) return true;
             }
 
             if (GasConfig.Loaded.AllowMasks)
@@ -314,22 +337,15 @@ namespace GasApi
         {
             if (!GasConfig.Loaded.AllowScuba || !(entity is EntityPlayer)) return false;
 
-            IPlayerInventoryManager inv = (entity as EntityPlayer)?.Player.InventoryManager;
-            ItemStack mask = inv.GetOwnInventory(GlobalConstants.characterInvClassName)?[(int)EnumCharacterDressType.Face].Itemstack;
+            ItemSlot maskSlot = GetCharacterSlot(EnumCharacterDressType.Face);
+            ItemStack mask = maskSlot?.Itemstack;
 
             if (mask == null || mask.Collectible.GetDurability(mask) <= 0 || mask.ItemAttributes == null) return false;
 
             if (mask.ItemAttributes.IsTrue("gassysScubaMask"))
             {
-                IInventory backpacks = inv.GetOwnInventory(GlobalConstants.backpackInvClassName);
-                if (backpacks != null && backpacks.Count >= 6)
-                {
-                    ItemStack gastank = backpacks[5].Itemstack;
-                    if (gastank != null && gastank.ItemAttributes != null && gastank.ItemAttributes.IsTrue("gassysScubaTank") && gastank.Collectible.GetDurability(gastank) > 0)
-                    {
-                        return true;
-                    }
-                }
+                ItemStack gastank = GetScubaTankSlot()?.Itemstack;
+                if (gastank != null && gastank.ItemAttributes != null && gastank.ItemAttributes.IsTrue("gassysScubaTank") && gastank.Collectible.GetDurability(gastank) > 0) return true;
             }
 
             return false;
@@ -337,7 +353,7 @@ namespace GasApi
 
         private void DamageMask(int dam)
         {
-            ItemSlot maskSlot = (entity as EntityPlayer)?.Player.InventoryManager.GetOwnInventory(GlobalConstants.characterInvClassName)?[(int)EnumCharacterDressType.Face];
+            ItemSlot maskSlot = GetCharacterSlot(EnumCharacterDressType.Face);
             ItemStack mask = maskSlot?.Itemstack;
 
             if (mask == null) return;
@@ -347,14 +363,31 @@ namespace GasApi
 
         private void DamageTank(int dam)
         {
-            IInventory tankInv = (entity as EntityPlayer)?.Player.InventoryManager.GetOwnInventory(GlobalConstants.backpackInvClassName);
-            if (tankInv == null || tankInv.Count < 6) return;
-            ItemSlot tankSlot = tankInv[5];
+            ItemSlot tankSlot = GetScubaTankSlot();
             ItemStack tank = tankSlot?.Itemstack;
 
             if (tank == null) return;
 
             tank.Collectible.DamageItem(entity.World, entity, tankSlot, dam);
+        }
+
+        private ItemSlot GetCharacterSlot(EnumCharacterDressType slotType)
+        {
+            IInventory inventory = (entity as EntityPlayer)?.Player?.InventoryManager?.GetOwnInventory(GlobalConstants.characterInvClassName);
+            int slotId = (int)slotType;
+
+            if (inventory == null || slotId < 0 || slotId >= inventory.Count) return null;
+
+            return inventory[slotId];
+        }
+
+        private ItemSlot GetScubaTankSlot()
+        {
+            IInventory inventory = (entity as EntityPlayer)?.Player?.InventoryManager?.GetOwnInventory(GlobalConstants.backpackInvClassName);
+
+            if (inventory == null || inventory.Count <= 5) return null;
+
+            return inventory[5];
         }
 
         public EntityBehaviorAir(Entity entity) : base(entity)

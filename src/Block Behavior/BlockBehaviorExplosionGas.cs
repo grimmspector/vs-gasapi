@@ -1,10 +1,10 @@
-﻿using Vintagestory.API.Common;
+using Vintagestory.API.Common;
 using Vintagestory.API;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Datastructures;
 using System.Collections.Generic;
 
-namespace GasApi
+namespace AsphyxiaRebreathed
 {
     public class BlockBehaviorExplosionGas : BlockBehavior
     {

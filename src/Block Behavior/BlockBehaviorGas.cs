@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 
-namespace GasApi
+namespace AsphyxiaRebreathed
 {
     public class BlockBehaviorGas : BlockBehavior
     {
@@ -22,7 +22,7 @@ namespace GasApi
 
             foreach (var gas in gasesHere)
             {
-                string name = Lang.GetIfExists("gasapi:gas-" + gas.Key) ?? gas.Key;
+                string name = Lang.GetIfExists("asphyxiarebreathed:gas-" + gas.Key) ?? gas.Key;
                 dsc.AppendLine(name + " : " + (gas.Value * 100).ToString("0.0") + "%");
             }
 

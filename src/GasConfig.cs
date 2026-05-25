@@ -1,4 +1,4 @@
-﻿namespace GasApi
+namespace AsphyxiaRebreathed
 {
     public class GasConfig
     {

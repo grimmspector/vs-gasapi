@@ -1,8 +1,8 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using Vintagestory.API.Datastructures;
 
-namespace GasApi
+namespace AsphyxiaRebreathed
 {
     [JsonObject(MemberSerialization.OptIn)]
     public class GasInfo

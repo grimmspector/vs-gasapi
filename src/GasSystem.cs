@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +14,7 @@ using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
-namespace GasApi
+namespace AsphyxiaRebreathed
 {
     public class GasSystem : ModSystem
     {
@@ -60,7 +60,7 @@ namespace GasApi
                 api.StoreModConfig<GasConfig>(GasConfig.Loaded, "GasConfig.json");
             }
 
-            api.World.Config.SetBool("GAgasesEnabled", GasConfig.Loaded.GasesEnabled);
+            api.World.Config.SetBool("ARgasesEnabled", GasConfig.Loaded.GasesEnabled);
         }
 
         public override void Start(ICoreAPI api)
@@ -82,14 +82,14 @@ namespace GasApi
             api.RegisterBlockEntityBehaviorClass("PlanterAbsorbs", typeof(BlockEntityBehaviorPlanterAbsorbs));
             api.RegisterBlockEntityBehaviorClass("ProduceGas", typeof(BlockEntityBehaviorProduceGas));
 
-            IAsset asset = api.Assets.Get("gasapi:config/gases.json");
+            IAsset asset = api.Assets.Get("asphyxiarebreathed:config/gases.json");
             GasDictionary = asset.ToObject<Dictionary<string, GasInfo>>();
             if (GasDictionary == null) GasDictionary = new Dictionary<string, GasInfo>();
 
             GasSpreadBlockRadius = getBlockInRadius(GasConfig.Loaded.DefaultSpreadRadius);
             entityUtil = api.ModLoader.GetModSystem<EntityPartitioning>();
 
-            harmony = new Harmony("com.jakecool19.gasapi.atmosphericoverhaul");
+            harmony = new Harmony("com.grimm.asphyxiarebreathed");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
 
@@ -102,12 +102,6 @@ namespace GasApi
         public override void StartClientSide(ICoreClientAPI api)
         {
             base.StartClientSide(api);
-
-            if (GasConfig.Loaded.PlayerBreathingEnabled)
-            {
-                HudElementAirBar airBar = new HudElementAirBar(api);
-                airBar.TryOpen();
-            }
 
             clientChannel = api.Network
                 .RegisterChannel("gases")
@@ -196,7 +190,7 @@ namespace GasApi
 
                         info.AppendLine(String.Format("Pollution in Chunk Column at positon X: {0}, Z: {1}", cpos.X, cpos.Y));
                         if (PollutionPerChunk != null && PollutionPerChunk.ContainsKey(cpos))
-                            foreach (var gas in PollutionPerChunk[cpos]) info.AppendLine(Lang.Get("gasapi:gas-" + gas.Key) + ": " + gas.Value.ToString("#.#"));
+                            foreach (var gas in PollutionPerChunk[cpos]) info.AppendLine(Lang.Get("asphyxiarebreathed:gas-" + gas.Key) + ": " + gas.Value.ToString("#.#"));
 
                         player.SendMessage(GlobalConstants.GeneralChatGroup, info.ToString(), EnumChatType.CommandSuccess);
                         break;
@@ -808,9 +802,9 @@ namespace GasApi
                         }
                     }
 
-                    if (!blocks.ContainsKey(parentChunk.Chunk.Unpack_AndReadBlock(toLocalIndex(bpos.AsBlockPos)))) continue;
+                    if (!blocks.ContainsKey(parentChunk.Chunk.UnpackAndReadBlock(toLocalIndex(bpos.AsBlockPos), BlockLayersAccess.Default))) continue;
 
-                    parent = blocks[parentChunk.Chunk.Unpack_AndReadBlock(toLocalIndex(bpos.AsBlockPos))];
+                    parent = blocks[parentChunk.Chunk.UnpackAndReadBlock(toLocalIndex(bpos.AsBlockPos), BlockLayersAccess.Default)];
 
                     //Process Children
                     foreach (BlockFacing facing in faces)
@@ -836,7 +830,7 @@ namespace GasApi
 
                         if (localArea == null) continue;
 
-                        int blockId = localArea.Chunk.Unpack_AndReadBlock(toLocalIndex(curPos));
+                        int blockId = localArea.Chunk.UnpackAndReadBlock(toLocalIndex(curPos), BlockLayersAccess.Default);
 
                         if (!blocks.TryGetValue(blockId, out atPos)) atPos = blocks[blockId] = blockAccessor.GetBlock(blockId);
 

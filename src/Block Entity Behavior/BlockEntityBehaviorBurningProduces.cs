@@ -1,4 +1,4 @@
-﻿using Vintagestory.API.Common;
+using Vintagestory.API.Common;
 using Vintagestory.GameContent;
 using Vintagestory.API;
 using Vintagestory.API.MathTools;
@@ -6,7 +6,7 @@ using Vintagestory.API.Datastructures;
 using System.Collections.Generic;
 using Vintagestory.API.Server;
 
-namespace GasApi
+namespace AsphyxiaRebreathed
 {
     public class BlockEntityBehaviorBurningProduces : BlockEntityBehavior
     {
@@ -54,8 +54,8 @@ namespace GasApi
                 (Blockentity as BlockEntityForge)?.IsBurning == true ||
                 (Blockentity as BlockEntityBloomery)?.IsBurning == true ||
                 (Blockentity as BlockEntityCoalPile)?.IsBurning == true ||
-                (Blockentity as BlockEntityTorch)?.Block.LightHsv?[2] > 0 ||
-                (Blockentity as BlockEntityTorchHolder)?.Block.LightHsv?[2] > 0 ||
+                ((Blockentity as BlockEntityTorch)?.Block.LightHsv[2] ?? 0) > 0 ||
+                ((Blockentity as BlockEntityTorchHolder)?.Block.LightHsv[2] ?? 0) > 0 ||
                 (Blockentity as BlockEntityPitKiln)?.Lit == true ||
                 (Blockentity as BlockEntityCharcoalPit)?.Lit == true ||
                 (Blockentity as BlockEntityBoiler)?.IsBurning == true ||

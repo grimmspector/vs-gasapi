@@ -8,7 +8,7 @@
       }
     ],
     "file": "game:blocktypes/clay/planter.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -19,7 +19,7 @@
       }
     ],
     "file": "game:blocktypes/clay/flowerpot.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
 
   {
@@ -28,28 +28,28 @@
     "value": {
       "gassysPlant": false
     },
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" },
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" },
     "file": "game:blocktypes/plant/glowworms.json"
   },
   {
     "op": "add",
     "path": "/attributes/gassysPlant",
     "value": false,
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" },
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" },
     "file": "game:blocktypes/plant/hay.json"
   },
   {
     "op": "add",
     "path": "/attributes/gassysPlant",
     "value": false,
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" },
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" },
     "file": "game:blocktypes/plant/mushroom.json"
   },
   {
     "op": "add",
     "path": "/attributes/gassysPlant",
     "value": false,
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" },
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" },
     "file": "game:blocktypes/plant/mushroom-side.json"
   },
   {
@@ -58,7 +58,7 @@
     "value": {
       "gassysPlant": true,
     },
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" },
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" },
     "file": "game:blocktypes/plant/seaweed.json"
   },
 ]

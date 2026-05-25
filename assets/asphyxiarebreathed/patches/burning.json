@@ -6,7 +6,7 @@
         "name": "BurningProduces"
       },
     "file": "game:blocktypes/fire.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -17,7 +17,7 @@
       }
     ],
     "file": "game:blocktypes/charcoalpit.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -26,7 +26,7 @@
         "name": "BurningProduces"
       },
     "file": "game:blocktypes/wood/pitkiln.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -37,7 +37,7 @@
       }
     ],
     "file": "game:blocktypes/clay/bloomerybase.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -48,7 +48,7 @@
       }
     ],
     "file": "game:blocktypes/coalpile.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -59,7 +59,7 @@
       }
     ],
     "file": "game:blocktypes/stone/generic/forge.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -73,7 +73,7 @@
       }
     ],
     "file": "game:blocktypes/wood/torch.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -83,7 +83,7 @@
         "name": "BurningProduces"
       },
     "file": "game:blocktypes/wood/firepit.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -93,7 +93,7 @@
         "name": "BurningProduces"
       },
     "file": "game:blocktypes/metal/verticalboiler.json",
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" }
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
   },
   {
     "op": "add",
@@ -106,7 +106,7 @@
         }
       }
     ],
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" },
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" },
     "file": "game:blocktypes/metal/torchholder.json"
   },
   {
@@ -120,7 +120,7 @@
         }
       }
     ],
-    "condition": { "when": "GAgasesEnabled", "isValue": "true" },
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" },
     "file": "game:blocktypes/clay/oillamp.json"
   }
 ]

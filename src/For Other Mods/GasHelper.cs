@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
@@ -8,7 +8,7 @@ using Vintagestory.API.Util;
 using Vintagestory.API.Server;
 using Vintagestory.API.Config;
 
-namespace GasApi
+namespace AsphyxiaRebreathed
 {
     public class GasHelper : ModSystem
     {
@@ -25,7 +25,7 @@ namespace GasApi
 
             try
             {
-                IAsset asset = api.Assets.Get("gasapi:config/gases.json");
+                IAsset asset = api.Assets.Get("asphyxiarebreathed:config/gases.json");
                 LiteGasDict = asset.ToObject<Dictionary<string, GasInfoLite>>();
                 if (LiteGasDict == null) LiteGasDict = new Dictionary<string, GasInfoLite>();
             }
@@ -40,7 +40,7 @@ namespace GasApi
         //Returns the gases for the entire chunk; Does not create gases or chunk data
         public Dictionary<int, Dictionary<string, float>> GetGasesForChunk(BlockPos pos)
         {
-            if (!api.ModLoader.IsModEnabled("gasapi")) return null;
+            if (!api.ModLoader.IsModEnabled("asphyxiarebreathed")) return null;
             byte[] data;
 
             IWorldChunk chunk = api.World.BlockAccessor.GetChunkAtBlockPos(pos);
@@ -68,7 +68,7 @@ namespace GasApi
         //Returns the gases for the entire chunk; Does not create gases or chunk data
         public Dictionary<int, Dictionary<string, float>> GetGasesForChunk(IWorldChunk chunk)
         {
-            if (!api.ModLoader.IsModEnabled("gasapi")) return null;
+            if (!api.ModLoader.IsModEnabled("asphyxiarebreathed")) return null;
             byte[] data;
 
             if (chunk == null) return null;
@@ -95,7 +95,7 @@ namespace GasApi
         //Returns gases for a particular block position
         public Dictionary<string, float> GetGases(BlockPos pos)
         {
-            if (!api.ModLoader.IsModEnabled("gasapi")) return null;
+            if (!api.ModLoader.IsModEnabled("asphyxiarebreathed")) return null;
             Dictionary<int, Dictionary<string, float>> gasesOfChunk = GetGasesForChunk(pos);
             if (gasesOfChunk == null) return null;
 
@@ -108,7 +108,7 @@ namespace GasApi
         //Returns the amount of the specified gas at a position if it is present
         public float GetGas(BlockPos pos, string name)
         {
-            if (!api.ModLoader.IsModEnabled("gasapi")) return 0;
+            if (!api.ModLoader.IsModEnabled("asphyxiarebreathed")) return 0;
             Dictionary<string, float> gasesHere = GetGases(pos);
 
             if (gasesHere == null || !gasesHere.ContainsKey(name)) return 0;
@@ -119,14 +119,14 @@ namespace GasApi
         //Serializes and sends a gas spread event on the bus
         public void SendGasSpread(BlockPos pos, Dictionary<string, float> gases = null)
         {
-            if (!api.ModLoader.IsModEnabled("gasapi") || api.Side != EnumAppSide.Server) return;
+            if (!api.ModLoader.IsModEnabled("asphyxiarebreathed") || api.Side != EnumAppSide.Server) return;
             (api as ICoreServerAPI)?.Event.PushEvent("spreadGas", SerializeGasTreeData(pos, gases));
         }
 
         //Serializes a gas spreading event
         public TreeAttribute SerializeGasTreeData(BlockPos pos, Dictionary<string, float> gases)
         {
-            if (!api.ModLoader.IsModEnabled("gasapi")) return null;
+            if (!api.ModLoader.IsModEnabled("asphyxiarebreathed")) return null;
             if (pos == null) return null;
 
             TreeAttribute tree = new TreeAttribute();
@@ -208,7 +208,7 @@ namespace GasApi
         //Returns the air quality for this position, ranging from 1 to -1. Postive values allow breathing, negative values suffocate
         public float GetAirAmount(BlockPos pos)
         {
-            if (!api.ModLoader.IsModEnabled("gasapi")) return 1;
+            if (!api.ModLoader.IsModEnabled("asphyxiarebreathed")) return 1;
             Dictionary<string, float> gasesHere = GetGases(pos);
 
             if (gasesHere == null) return 1;
@@ -232,7 +232,7 @@ namespace GasApi
         //Returns the aciditiy for an area between 0 and 1
         public float GetAcidity(BlockPos pos)
         {
-            if (!api.ModLoader.IsModEnabled("gasapi")) return 0;
+            if (!api.ModLoader.IsModEnabled("asphyxiarebreathed")) return 0;
             Dictionary<string, float> gasesHere = GetGases(pos);
 
             if (gasesHere == null) return 0;
@@ -254,7 +254,7 @@ namespace GasApi
         //Returns whether there is a flammable amount of gas at this position
         public bool IsVolatile(BlockPos pos)
         {
-            if (!api.ModLoader.IsModEnabled("gasapi")) return false;
+            if (!api.ModLoader.IsModEnabled("asphyxiarebreathed")) return false;
             Dictionary<string, float> gasesHere = GetGases(pos);
 
             if (gasesHere == null) return false;
@@ -273,7 +273,7 @@ namespace GasApi
         //Returns whether there is enough explosive gas here to explode
         public bool ShouldExplode(BlockPos pos)
         {
-            if (!api.ModLoader.IsModEnabled("gasapi")) return false;
+            if (!api.ModLoader.IsModEnabled("asphyxiarebreathed")) return false;
             Dictionary<string, float> gasesHere = GetGases(pos);
 
             if (gasesHere == null) return false;
@@ -292,7 +292,7 @@ namespace GasApi
         //Determines if there is enough of the gas to be toxic
         public bool IsToxic(string name, float amount)
         {
-            if (!api.ModLoader.IsModEnabled("gasapi")) return false;
+            if (!api.ModLoader.IsModEnabled("asphyxiarebreathed")) return false;
             if (!LiteGasDict.ContainsKey(name)) return true;
 
             return amount > LiteGasDict[name].ToxicAt;
@@ -302,7 +302,7 @@ namespace GasApi
         //Note: Because this happens on the main thread and gas spreading happens on an off thread, it may be somewhat inaccurate
         public Dictionary<string, float> CollectGases(BlockPos pos, int radius, string[] gasFilter)
         {
-            if (!api.ModLoader.IsModEnabled("gasapi") || api.Side != EnumAppSide.Server) return null;
+            if (!api.ModLoader.IsModEnabled("asphyxiarebreathed") || api.Side != EnumAppSide.Server) return null;
             
             IBlockAccessor blockAccessor = api.World.BlockAccessor;
             if (pos.Y < 1 || pos.Y > blockAccessor.MapSizeY) return null;
@@ -360,9 +360,9 @@ namespace GasApi
 
                 Block parent = null;
                 IWorldChunk parentChunk = chunks[parentChunkVec];
-                if (!blocks.ContainsKey(parentChunk.Unpack_AndReadBlock(toLocalIndex(bpos.AsBlockPos)))) continue;
+                if (!blocks.ContainsKey(parentChunk.UnpackAndReadBlock(toLocalIndex(bpos.AsBlockPos), BlockLayersAccess.Default))) continue;
 
-                parent = blocks[parentChunk.Unpack_AndReadBlock(toLocalIndex(bpos.AsBlockPos))];
+                parent = blocks[parentChunk.UnpackAndReadBlock(toLocalIndex(bpos.AsBlockPos), BlockLayersAccess.Default)];
 
                 foreach (BlockFacing facing in faces)
                 {
@@ -378,7 +378,7 @@ namespace GasApi
 
                     if (chunk == null) continue;
 
-                    int blockId = chunk.Unpack_AndReadBlock(toLocalIndex(curPos));
+                    int blockId = chunk.UnpackAndReadBlock(toLocalIndex(curPos), BlockLayersAccess.Default);
 
                     if (!blocks.TryGetValue(blockId, out atPos)) atPos = blocks[blockId] = blockAccessor.GetBlock(blockId);
 
@@ -415,7 +415,7 @@ namespace GasApi
         //Returns the display name of the gas if it has one
         public static string GetGasDisplayName(string gas)
         {
-            string results = Lang.GetIfExists("gasapi:gas-" + gas);
+            string results = Lang.GetIfExists("asphyxiarebreathed:gas-" + gas);
 
             return results == null ? gas : results;
         }

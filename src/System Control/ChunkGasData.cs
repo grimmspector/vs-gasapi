@@ -1,6 +1,6 @@
-﻿using ProtoBuf;
+using ProtoBuf;
 
-namespace GasApi
+namespace AsphyxiaRebreathed
 {
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public class ChunkGasData
