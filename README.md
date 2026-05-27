@@ -1,125 +1,174 @@
-# Gas API
-## Introduction
-I originally had the idea for making gases first as a feature for Useful Stuff, then went into the offshoot mod Lands of Chaos. The first system used special meta bloks to accomplish this, and while it somewhat worked, due to it being block based it had many flaws. Because it used blocks, no more than one gas could exist in a block position at a time and without a block entity it could not store unique data so gas blocks only had 8 levels, increments of 12.5%. Again due to the block based system, it had the massive potential to cause compatibility issues with mods and multiblock structures that expected air in certain positions, would leave behind a whole bunch of placeholder blocks if the mod was removed, and finally was prone to getting into infinite loops. Because of all this I decided to completely redo the system using chunk data instead of blocks.
+# Asphyxia: Rebreathed
 
-While orginally going to be apart of Lands Of Chaos, with the new system using purely chunk data with primitive data types that can be accessed by any mod if it knows the proper location and structure, I decided to make a part api/library mod similiar to Goxmeor's Buff Stuff mod.
-Thus, the offshoot of an offshoot, Asphyxia was born!
+Asphyxia: Rebreathed adds a full gas simulation system to Vintage Story using chunk-based data instead of physical gas blocks. Gases can build up, spread through connected spaces, vent outdoors, ignite, explode, poison creatures, affect breathing, and interact with the environment dynamically.
 
-## Basics
-Gases are stored as dictionaries with the gas name(string) as the key, and the concentration of the gas(a decimal value) as the value. Within a block space, this allows for the existence of an indefinite number of gases at a time, however concentrations can only be 0-1 in a block space. A gas spread event is when gases are spread and/or redistributed in an area. The maximum of that area is a cube that has sides which are 2 * radius + 1, so the default radius of 7 means a maximum spread area of 15x15x15. The spread starts from the center and will spread to blocks if it is not blocked by a solid side. Gases can exist in liquid blocks, but when spreading they will tend to stay out of liquid, or if they are in liquid, tend to get out. Blocks that are Plant or Leaves material will absorb certain gases like carbon dioxide. If there are more gases than the area can hold they will voided. Likewise if a position in the spread event is open to the sky the gas will also be voided if the wind is at a certain speed, but stored in the pollution of the chunk.
+Requires Vintage Story 1.22.2.
 
-### Gas Spread Dictionary
-In json a gas dictionary would like { "gasname": gas.value, "helium": 0.5}. In C# it is a Dictionary<string,float> object.
+## Features
 
-### Meta Keys
-- "RADIUS" //This key will allow you to put in a custom radius based on the value it is assigned
-- "THISISANEXPLOSION" //This key sets the gas spread event to turn flammable/combustible gases to their burned forms if they have one. The value assigned does not matter
-- "THISISAPLANT" //This key will act like a plant and absorb plant absorbable gases based on the value it is assigned.
-- "IGNORELIQUIDS" //This key will cause gas spread event to ignore the stay out of liquids rule and will spread freely through whatever medium. Value does not matter
-- "IGNORESOLIDCHECK" //This key will cause gas spread event to ignore solid sides entirely. Value does not matter
+- Uses chunk-stored gas data rather than placeholder gas blocks.
+- Multiple gases can exist in the same space at varying concentrations.
+- Gases spread naturally through caves, buildings, and open areas while respecting walls, doors, trapdoors, liquids, plants, wind, and open sky.
+- Light gases rise, heavy gases sink, and neutral gases distribute more evenly.
+- Outdoor ventilation can clear gases while tracking environmental pollution.
+- Certain plants and planted containers can absorb compatible gases.
+- Gas data syncs between server and client for gameplay effects and inspection.
 
+## Included Gases
 
-## Content Side (JSON)
-The properties of gases are defined in gasapi:config/gases.json, and by patching existing gas properties can be changed or you can add your own gas. There are also a handful of behaviors that can be used and modified as well.
+- Carbon Dioxide
+- Carbon Monoxide
+- Smoke
+- Methane
+- Hydrogen
+- Hydrogen Sulfide
+- Sulfur Dioxide
+- Nitrogen Dioxide
+- Coal Dust
+- Silica Dust
 
-### Gas Properties
+## Gameplay Systems
 
-The key for your gas should be the same as it's code.
+### Breathing
 
-- "light": false //This determines if a gas will sink or float. Light gases collect at the ceiling, heavy gases pool on the ground
-- "distribute": false //If true, this gas will ignore gravity and will evenly distribute in the entire area.
-- "ventilateSpeed": 0 //This determines at what wind speed gas will disappear if exposed to open sky. 1.85 is the fastest wind blows
-- "plantAbsorb": false //If true this gas will be absorbed by plants
-- "suffocateAmount": 1 //At what value this gas will suffocate the player.
-- "flammableAmount": 2 //At what value this will cause entities that are in it to burn if there is an explosion. Must be less than or equal to 1 to burn
-- "explosionAmount": 2 //At what value this gas will explode. Must less than or equal to 1 to explode
-- "burnInto": "null" //If this is flammable or explosive and the gas spreading event is combustive, this is what gas it will turn into
-- "acidic": false //If true this gas will turn liquids acidic and its pollution will be acidic
-- "effects": {"walkspeed": -0.2} // The effects this gas has on creatures that breathe it. So at 50% concentraion this gas will reduce movement speed by 10%. At full concentration it will reduce movement speed by 20%
-- "toxicAt": 0 //At what point will this gas start applying its affects
-- "pollutant": false // If true this gas will cause greenhouse effects and acid rain effects if acidic. (Not yet implemented)
+Creatures that use vanilla breathing mechanics are integrated into the gas system. Poor air quality reduces available breath, eventually leading to suffocation if air runs out completely.
 
-To give your gas a display name, simply put "gasapi:gas-yourgascode": "yourgasdisplayname" in your lang file.
+Toxic gases can apply a range of negative effects, including slower movement, reduced mining speed, weaker attacks, slower healing, reduced max health, armor damage, and faster oxygen loss.
 
-### Block Behaviors
-These block behaviors can be used to create and spread gases in the world
+Players and creatures can also exhale carbon dioxide when exhaling is enabled.
 
-- "SparkGas": Blocks with this behavior has a chance to detonate explosive gases
-  - Can be used with any block
-  - Has no definable properties
+### Fire, Smoke, and Combustion
 
-- "MineGas": Blocks with this behavior produce gas when broken
-  - Can be used with any block
-  - "produceGas" Is a gas dictionary of what to spread, "onRemove" is true/false whether it should happen when the block is broken or when removed
+Burning blocks and block entities can generate gases such as carbon monoxide and carbon dioxide. Supported sources currently include fire, firepits, forges, bloomeries, coal piles, charcoal pits, pit kilns, torches, torch holders, oil lamps, and boilers.
 
-- "PlaceGas": Blocks with this behavior has a chance to detonate explosive gases
-  - Can be used with any block, preferably with at least one non solid side
-  - "produceGas" Is a gas dictionary of what to spread
+Flammable gases can ignite, and explosive gases can detonate when concentrations become high enough.
 
-- "ExplosionGas": Blocks with this behavior release gas when blown up
-  - Can be used with any block
-  - "produceGas" Is a gas dictionary of what to spread
+### Mining and Caving
 
-### Block Entity Behaviors
-These block behaviors can be used to create and spread gases in the world
+Mining and explosions can release dangerous gases and dust into surrounding areas.
 
-- "BurningProduces": Block entities with this behavior will produce gas if they are burning
-  - Only works with the firepit, forge, bloomery, coal pile, torches, torch holders, pit kilns, charcoalpits, and boilers
-  - "produceGas" Is a gas dictionary of what to spread. By dewfault this is {"carbonmonoxide": 0.2, "carbondioxide": 0.5}
+Examples include:
 
-- "PlanterAbsorbs": Block entities with this behavior absorb plant absorbent gases
-  - Only works with flowerpots and planters
-  - "produceGas" Is a gas dictionary of what to spread. Default is {"THISISAPLANT" : 1}
+- Silica dust from rock and stalagmites
+- Methane and coal dust from coal ores
+- Coal dust from placing or removing coal and charcoal piles
+- Hydrogen sulfide from sulfide ores
+- Sulfur dioxide from exploded sulfide ores and sulfur ore
+- Nitrogen dioxide from saltpeter
 
-- "ProduceGas": Block entities with this behavior produce gas
+Dust generation is reduced or prevented when the source material is wet unless otherwise configured.
+
+### Explosions
+
+Explosions generate nitrogen dioxide and carbon monoxide based on blast size. Blocks with explosion gas behaviors can contribute additional gases to the resulting cloud.
+
+Explosions can also ignite and consume flammable gases, converting them into their configured byproducts.
+
+### Acidic Liquids
+
+Acidic gases can increase acidity around nearby liquids. High acidity can poison entities and damage armor unless the equipment is marked as corrosion resistant.
+
+### Food Preservation
+
+When enabled, containers stored in poor air quality can receive reduced perish rates.
+
+### RealSmoke Compatibility
+
+With compatibility enabled, nearby RealSmoke smoke entities are treated as carbon monoxide and carbon dioxide during gas checks. The mod can also disable RealSmoke’s own suffocation system so breathing effects are handled consistently through Asphyxia instead.
+
+## Configuration
+
+The mod generates `asphyxiarebreathed.json`. Legacy `GasConfig.json` files are still supported if present.
+
+Some important settings include:
+
+- `GasesEnabled`
+- `BreathingEnabled`
+- `PlayerBreathingEnabled`
+- `Explosions`
+- `FlammableGas`
+- `PickaxeExplosionChance`
+- `Smoke`
+- `Acid`
+- `Exhaling`
+- `ContainerBonus`
+- `AllowScuba`
+- `AllowMasks`
+- `ToxicEffects`
+- `RealSmokeCompatibility`
+- `DisableRealSmokeAsphyxiation`
+- `OreSeepsEnabled`
+- `DefaultSpreadRadius`
+
+Ore seeps are fully implemented but disabled by default.
+
+## Admin Commands
+
+All commands begin with `/gassys`.
+
+- `/gassys queue` displays queued gas spread events.
+- `/gassys reset` rebuilds the spread queue.
+- `/gassys find` lists queued gas event locations.
+- `/gassys stop` stops the gas spread thread.
+- `/gassys start` starts the gas spread thread.
+- `/gassys cleanstart` starts the system with a rebuilt queue.
+- `/gassys toggle` pauses or resumes gas spreading.
+- `/gassys pollution` shows recorded pollution for the current chunk column.
+
+## Modding Support
+
+Gas definitions are stored in:
+
+`assets/asphyxiarebreathed/config/gases.json`
+
+### Supported block and block entity behaviors include:
+
+- `MineGas`
+- `PlaceGas`
+- `ExplosionGas`
+- `SparkGas`
+- `BurningProduces`
+  - `smolderGas` is a gas dictionary of what to spread while smoldering.
+  - `smolderGasByType` maps block code wildcards to smolder gas dictionaries.
+  - `smolderWhenLit` defaults to false. If true, the block uses smolder gas while burning instead of only when unlit.
+  - `gassysSmolderWhenLit`: true //This attribute marks a lit item as a smolder source while carried.
+  - `gassysSmolderGas`: {"smoke": 0.1} //This attribute is a gas dictionary released by smoldering carried items when backpack smolder emissions are enabled.
+- `PlanterAbsorbs`
+- `ProduceGas`
+- "GasVent": Block entities with this behavior produce gas only when environmental conditions allow it
   - Works with any block entity
-  - "produceGas" Is a gas dictionary of what to spread. "updateMS" is an integer of how often in milliseconds the production function is called. "updateHours" is in game hourly intervals it spawns gas
+  - `produceGas` is a gas dictionary of what to spread.
+  - `produceGasByType` maps block code wildcards to gas dictionaries, allowing one patch to define different gases for different block variants.
+  - `updateMS` is an integer of how often in milliseconds the production function is checked.
+  - `updateHours` is the in-game hourly interval between successful gas releases.
+  - `minY` and `maxY` limit the block Y range where the vent can produce gas.
+  - `maxLight` prevents venting when the block's max light level is above this value.
+  - `requireSkyless` defaults to true. If true, the vent will not produce gas when open to the sky.
+  - `ignoreLiquids` defaults to false. If true, the gas spread event ignores the normal liquid spreading restriction.
+  - `ignoreSides` defaults to false. If true, the gas spread event ignores solid side checks.
 
-### Entity Behaviors
-These are behaviors that can be given to entities to interact with the gas system
+Supported entity behaviors include:
 
-- "breathe": This replaces the vanilla behavior. Requires entities to need air and makes them have toxic effects from gases
-  - Works for all entities with "health"
-  - "waterBreather" If true this will make the entity breath in liquids but suffocate on land. "currentair" is a decimal amount of how much air the entity starts with at spawn. "maxair" Is the maximum amount of time an entity can hold its breath.
+- `air`
+- `gasinteract`
 
-### Special Item Attributes
-These attributes can give certain items special gas-related properties
+Gas-related attributes include:
 
-- "gassysAntiCorrosion": true //This attribute is for armor, and if set to true makes it so that they do not corrode. See armor patches
-- "gassysGasMaskProtection": [ "nitrogendioxide" ] //This attribute is a string array for masks, and will protect the user from toxic gases that are specified in it. The mask will be damaged when in the presence of those gases
-- "gassysScubaMask": true //This attribute when true on a mask, makes it a part of a scuba set. Needs a scuba tank to work
-- "gassysScubaTank": true //This attribute when true on an item in the second slot of a person's inventory, will act like a scuba tank and when combined with the mask, will provide a breathable air and completely protect against toxic effects. Takes damage as long as the mask is worn.
+- `gassysSolidSides`
+- `gassysPlant`
+- `gassysAntiCorrosion`
+- `gassysGasMaskProtection`
+- `gassysScubaMask`
+- `gassysScubaTank`
+- `gassysSmolderGas`
+- `gassysSmolderWhenLit`
 
-### Special Block Attributes
-The attributes can give certain blocks special gas related properties
+Other mods can interact with the system through `GasHelper` to read gas data, evaluate air quality, check toxicity or acidity, gather gases from an area, or queue gas spread events through the event bus.
 
-- "gassysSolidSides": {"north": true, "south": false} // If this exists in a blocks attributes, during a gas spread event, its actual solid sides is ignored and this is considered
-- "gassysPlant": true // If this exists the gas spread event will ignore its block material check and instead check this to see if it is a plant.
+## Current Limitations
 
-## Code Side (C#)
-Due to the new system using primitive data in stored in chunk data that any mod can access, it is not neccessary to make this mod a hard depedency. Best practice to use this library, is to copy and paste the [GasHelper class](https://github.com/91loocekaj/vs-gasapi/blob/main/src/For%20Other%20Mods/GasHelper.cs) into your own name space. Then retrieve it with ICoreAPI.Modloader.GetModSystem and use it like any other mod system.
+Pollution tracking is implemented, but larger climate systems such as greenhouse effects and acid rain are not yet included.
 
-### Data Storage
-Gas data is stored in the chunk mod data in the key "gases". For a chunk it is a Dictionary<int, Dictionary<string, float>>. The key is the local block position index and the values are the gas dictionary for the particular block position. Modifying, adding, and deleting data should all occur server side, and then should be synced on the client. No editing should happen on the client.
+Gas spreading runs on a separate background thread, so changes may not appear instantly after a spread event is queued.
 
-### The Gas Helper
-The GasHelper is a helper class designed to make manipulation of gases easier for other mods. All of its methods will not function and return default values if the main Gas API mod is not installed or not enabled, so you can use these methods without having to check for if the mod is there. The gas helper can only read gas information and has no writing ability. To cause a gas spread event it will turn the data into a TreeAttribute object and send it to the main Gas API via the event bus to process. If updates need to be made to it the version number will change, so make sure to keep track of that when new updates of the mod come out.
-
-### Limitations
-Gas spreading takes place on its own separate thread than the main game one. This helps tremendously with performance vs the old system, but comes at the cost that it is not in sync with the main game thread. So if you where to send a gas spread event and then in the next line check what gases are at the origin of the gas spread, your gases will most likely not be there yet.
-
-## Other Stuff
-
-### Commands
-All commands start with /gassys and then the keyword.
-- queue: Shows how many gas spreading events are scheduled to run
-- reset: Recreates the queue
-- find: Shows the positions for all gas spread events in queue
-- stop: Shuts down the gas spread thread
-- start: Starts up the gas spread thread
-- cleanstart: Starts up the gas spread queue with a new, empty queue
-- toggle: Toggles the pause on the gas spread thread
-- pollution: Shows how much pollution is in the chunk
-
-### Todo
-The pollution system right now only records gases that have been vented, none of the values are actually used for climate change and things of that nature. Planning on doing something with that once I figure out a good balance.
+Ore seeps are implemented in code but disabled by default.

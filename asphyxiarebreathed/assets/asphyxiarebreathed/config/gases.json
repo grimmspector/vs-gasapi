@@ -3,6 +3,16 @@
     "light" : false,
     "plantAbsorb" : true
   },
+  "smoke": {
+    "light" : true,
+    "distribute": true,
+    "suffocateAmount" : 0.6,
+    "toxicAt": 0.4,
+    "effects": {
+      "airLoss" : 0.15,
+      "airRecovery" : -0.15
+    }
+  },
   "carbonmonoxide": {
     "light" : true,
     "distribute": true,

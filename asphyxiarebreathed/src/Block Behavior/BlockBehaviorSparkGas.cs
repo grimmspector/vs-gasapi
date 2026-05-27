@@ -6,9 +6,9 @@ namespace AsphyxiaRebreathed
 {
     public class BlockBehaviorSparkGas : BlockBehavior
     {
-        public override void OnBlockBroken(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, ref EnumHandling handling)
+        public override void OnBlockBroken(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier, ref EnumHandling handling)
         {
-            base.OnBlockBroken(world, pos, byPlayer, ref handling);
+            base.OnBlockBroken(world, pos, byPlayer, dropQuantityMultiplier, ref handling);
             
             if (world.Side != EnumAppSide.Server || byPlayer == null || !GasConfig.Loaded.GasesEnabled || !GasConfig.Loaded.Explosions || world.Rand.NextDouble() > GasConfig.Loaded.PickaxeExplosionChance) return;
 

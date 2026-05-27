@@ -13,7 +13,7 @@ namespace AsphyxiaRebreathed
         public override void Initialize(JsonObject properties)
         {
             base.Initialize(properties);
-            produceGas = properties["produceGas"].AsObject(new Dictionary<string, float>());
+            produceGas = GasSourceProperties.GetProduceGas(properties, block);
         }
 
         public override void OnBlockPlaced(IWorldAccessor world, BlockPos blockPos, ref EnumHandling handling)

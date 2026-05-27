@@ -7,6 +7,7 @@ using Vintagestory.API.Datastructures;
 using System;
 using Vintagestory.API.Config;
 using System.Linq;
+using Vintagestory.GameContent;
 
 namespace AsphyxiaRebreathed
 {
@@ -20,16 +21,19 @@ namespace AsphyxiaRebreathed
 
         ITreeAttribute airTree;
         GasSystem atmosphere;
+        EntityBehaviorBreathe vanillaBreathe;
 
         public bool waterBreather = false;
+        public bool ComplementVanillaBreathing = false;
         float damageOn = 0;
         double timer;
         float effectsTimer;
         float scubaTimer;
+        bool heldVanillaAir;
 
         BlockPos HeadBlock
         {
-            get { return (entity as EntityAgent)?.SidedPos.AsBlockPos.Add(0, (float)entity.Properties.EyeHeight, 0) ?? entity.SidedPos.AsBlockPos; }
+            get { return (entity as EntityAgent)?.Pos.AsBlockPos.Add(0, (float)entity.Properties.EyeHeight, 0) ?? entity.Pos.AsBlockPos; }
         }
 
         public float Air
@@ -74,6 +78,7 @@ namespace AsphyxiaRebreathed
         public override void Initialize(EntityProperties properties, JsonObject typeAttributes)
         {
             atmosphere = entity.Api.ModLoader.GetModSystem<GasSystem>();
+            vanillaBreathe = entity.GetBehavior<EntityBehaviorBreathe>();
             timer = entity.World.Calendar.TotalHours;
             waterBreather = typeAttributes.IsTrue("waterBreather");
             airTree = entity.WatchedAttributes.GetTreeAttribute(OxygenTreeName);
@@ -128,7 +133,17 @@ namespace AsphyxiaRebreathed
 
         public override void OnGameTick(float deltaTime)
         {
-            if (!entity.Alive) return;
+            if (!entity.Alive)
+            {
+                ReleaseVanillaAir();
+                return;
+            }
+
+            if (UsesVanillaBreathing)
+            {
+                OnComplementaryBreathingTick(deltaTime);
+                return;
+            }
 
             UpdateMaxAir();
 
@@ -142,7 +157,7 @@ namespace AsphyxiaRebreathed
                 Dictionary<string, float> exhaust = new Dictionary<string, float>();
                 exhaust.Add("carbondioxide", 1f);
 
-                atmosphere.QueueGasExchange(exhaust, entity.SidedPos.AsBlockPos);
+                atmosphere.QueueGasExchange(exhaust, entity.Pos.AsBlockPos);
             }
 
             //Handle air intake
@@ -203,7 +218,7 @@ namespace AsphyxiaRebreathed
         {
             if (!entity.Swimming) return false;
 
-            Vec3d head = entity.SidedPos.XYZ.AddCopy(0, entity.CollisionBox.Height, 0);
+            Vec3d head = entity.Pos.XYZ.AddCopy(0, entity.CollisionBox.Height, 0);
             Block liquid = entity.World.BlockAccessor.GetBlock(head.AsBlockPos);
 
             return liquid.IsLiquid() && (entity.World.BlockAccessor.GetBlock(head.AsBlockPos.Add(0, 1, 0)).IsLiquid() || head.Y - (0.25 * entity.CollisionBox.Height) < head.AsBlockPos.Y + ((liquid.LiquidLevel + 1) / 8));
@@ -224,6 +239,67 @@ namespace AsphyxiaRebreathed
             if (solid) return -1f * entity.Stats.GetBlended("airLoss") * air;
 
             return air * mult * (mult > 0 ? entity.Stats.GetBlended("airRecovery") : entity.Stats.GetBlended("airLoss"));
+        }
+
+        bool UsesVanillaBreathing
+        {
+            get { return ComplementVanillaBreathing && vanillaBreathe != null; }
+        }
+
+        private void OnComplementaryBreathingTick(float deltaTime)
+        {
+            if (GasConfig.Loaded.ToxicEffects) HandleEffects(deltaTime);
+
+            if (GasConfig.Loaded.Exhaling && entity.World.Calendar.TotalHours - timer >= 10)
+            {
+                timer = entity.World.Calendar.TotalHours;
+
+                Dictionary<string, float> exhaust = new Dictionary<string, float>();
+                exhaust.Add("carbondioxide", 1f);
+
+                atmosphere.QueueGasExchange(exhaust, entity.Pos.AsBlockPos);
+            }
+
+            if (EntityUnderwater() || HasScubaSet())
+            {
+                heldVanillaAir = false;
+                return;
+            }
+
+            SetVanillaAirBlocked(ShouldBlockVanillaAir());
+        }
+
+        private bool ShouldBlockVanillaAir()
+        {
+            BlockPos head = HeadBlock;
+            Block block = entity.World.BlockAccessor.GetBlock(head);
+            bool solid = true;
+
+            foreach (BlockFacing face in BlockFacing.ALLFACES)
+            {
+                solid &= block.SideSolid[face.Index];
+            }
+
+            return solid || atmosphere.GetAirAmount(head) <= 0;
+        }
+
+        private void SetVanillaAirBlocked(bool blocked)
+        {
+            if (blocked)
+            {
+                vanillaBreathe.HasAir = false;
+                heldVanillaAir = true;
+                return;
+            }
+
+            if (heldVanillaAir) vanillaBreathe.HasAir = true;
+            heldVanillaAir = false;
+        }
+
+        private void ReleaseVanillaAir()
+        {
+            if (vanillaBreathe != null && heldVanillaAir) vanillaBreathe.HasAir = true;
+            heldVanillaAir = false;
         }
 
         private void RemoveEffect(string name)
@@ -312,12 +388,12 @@ namespace AsphyxiaRebreathed
             ItemSlot maskSlot = GetCharacterSlot(EnumCharacterDressType.Face);
             ItemStack mask = maskSlot?.Itemstack;
 
-            if (mask == null || mask.Collectible.GetDurability(mask) <= 0 || mask.ItemAttributes == null) return false;
+            if (mask == null || mask.Collectible.GetRemainingDurability(mask) <= 0 || mask.ItemAttributes == null) return false;
 
             if (GasConfig.Loaded.AllowScuba && mask.ItemAttributes.IsTrue("gassysScubaMask"))
             {
                 ItemStack gastank = GetScubaTankSlot()?.Itemstack;
-                if (gastank != null && gastank.ItemAttributes != null && gastank.ItemAttributes.IsTrue("gassysScubaTank") && gastank.Collectible.GetDurability(gastank) > 0) return true;
+                if (gastank != null && gastank.ItemAttributes != null && gastank.ItemAttributes.IsTrue("gassysScubaTank") && gastank.Collectible.GetRemainingDurability(gastank) > 0) return true;
             }
 
             if (GasConfig.Loaded.AllowMasks)
@@ -340,12 +416,12 @@ namespace AsphyxiaRebreathed
             ItemSlot maskSlot = GetCharacterSlot(EnumCharacterDressType.Face);
             ItemStack mask = maskSlot?.Itemstack;
 
-            if (mask == null || mask.Collectible.GetDurability(mask) <= 0 || mask.ItemAttributes == null) return false;
+            if (mask == null || mask.Collectible.GetRemainingDurability(mask) <= 0 || mask.ItemAttributes == null) return false;
 
             if (mask.ItemAttributes.IsTrue("gassysScubaMask"))
             {
                 ItemStack gastank = GetScubaTankSlot()?.Itemstack;
-                if (gastank != null && gastank.ItemAttributes != null && gastank.ItemAttributes.IsTrue("gassysScubaTank") && gastank.Collectible.GetDurability(gastank) > 0) return true;
+                if (gastank != null && gastank.ItemAttributes != null && gastank.ItemAttributes.IsTrue("gassysScubaTank") && gastank.Collectible.GetRemainingDurability(gastank) > 0) return true;
             }
 
             return false;

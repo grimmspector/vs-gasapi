@@ -4,6 +4,7 @@ using Vintagestory.API;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Datastructures;
 using System.Collections.Generic;
+using System.Text;
 using Vintagestory.API.Server;
 
 namespace AsphyxiaRebreathed
@@ -12,6 +13,8 @@ namespace AsphyxiaRebreathed
     {
         GasSystem gasHandler;
         public Dictionary<string, float> produceGas;
+        public Dictionary<string, float> smolderGas;
+        public bool smolderWhenLit;
         BlockPos blockPos
         {
             get { return Blockentity.Pos; }
@@ -22,7 +25,9 @@ namespace AsphyxiaRebreathed
             base.Initialize(api, properties);
             gasHandler = api.ModLoader.GetModSystem<GasSystem>();
             Blockentity.RegisterGameTickListener(ProduceCO, 5000);
-            produceGas = properties["produceGas"].AsObject(new Dictionary<string, float>());
+            produceGas = GasSourceProperties.GetProduceGas(properties, Blockentity.Block);
+            smolderGas = GasSourceProperties.GetSmolderGas(properties, Blockentity.Block);
+            smolderWhenLit = properties["smolderWhenLit"].AsBool(false);
             if (produceGas == null || produceGas.Count < 1)
             {
                 produceGas = new Dictionary<string, float>();
@@ -43,9 +48,29 @@ namespace AsphyxiaRebreathed
                 }
                 else if (GasConfig.Loaded.Smoke)
                 {
-                   gasHandler.QueueGasExchange(new Dictionary<string, float>(produceGas), blockPos);
+                    Dictionary<string, float> gases = smolderWhenLit && HasSmolderGas() ? smolderGas : produceGas;
+                    gasHandler.QueueGasExchange(new Dictionary<string, float>(gases), blockPos);
                 }
             }
+            else if (GasConfig.Loaded.Smoke && HasSmolderGas() && !smolderWhenLit)
+            {
+                gasHandler.QueueGasExchange(new Dictionary<string, float>(smolderGas), blockPos);
+            }
+        }
+
+        public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
+        {
+            base.GetBlockInfo(forPlayer, dsc);
+
+            if (!GasConfig.Loaded.GasesDebugEnabled) return;
+
+            GasDebugInfo.AppendGasList(dsc, "Burning Produces:", produceGas);
+            GasDebugInfo.AppendGasList(dsc, "Smolder Produces:", smolderGas);
+        }
+
+        private bool HasSmolderGas()
+        {
+            return smolderGas != null && smolderGas.Count > 0;
         }
 
         private bool IsBurning()

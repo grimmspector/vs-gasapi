@@ -1,6 +1,7 @@
 {
   "gas-carbonmonoxide": "Carbon Monoxide",
   "gas-carbondioxide": "Carbon Dioxide",
+  "gas-smoke": "Smoke",
   "gas-hydrogen": "Hydrogen",
   "gas-hydrogensulfide": "Hydrogen Sulfide",
   "gas-methane": "Methane",
@@ -11,6 +12,7 @@
 
   "block-gas-carbonmonoxide": "Carbon Monoxide",
   "block-gas-carbondioxide": "Carbon Dioxide",
+  "block-gas-smoke": "Smoke",
   "block-gas-hydrogen": "Hydrogen",
   "block-gas-hydrogensulfide": "Hydrogen Sulfide",
   "block-gas-methane": "Methane",
@@ -30,6 +32,12 @@ Gases and particles exist all around you and while some are common and harmless 
 + Explosive gases can be set off by torches and oil lamps in hand, burning creatures, burning blocks, and also has a chance to go off with a spark from a pickaxe. Lanterns do not ignite gas so try to get them asap.
 + On average, most creatures can hold their breath for 15 seconds, however this is can be shortened by the toxic effects of gases like carbon monoxide.
 + Acidic liquids will eat away at most armor, except for gold and silver.
+
+<strong>Gas Sources</strong>
++ Some blocks can slowly vent gas into nearby air. These sources usually need the right conditions, such as darkness, depth, blocked sky access, or open space next to them.
++ Burning blocks and block entities can produce smoke and dangerous gases while lit. Some hot or recently used things can also smolder, releasing gas even when they are not actively burning.
++ Lit smoldering items carried in backpacks can release gas if backpack smolder emissions are enabled.
++ If gas debug is enabled, looking at gas-producing blocks can show what gases they release.
 
 <strong>Types of Gases</strong>
 + Carbon Dioxide: One of the most abundant gases, it is exhaled by breathing living things, and a common product of combustion. It is heavier than air and is absorbed by plants.

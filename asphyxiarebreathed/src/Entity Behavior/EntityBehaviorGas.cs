@@ -46,20 +46,20 @@ namespace AsphyxiaRebreathed
 
             timeKeeper = 0;
 
-            BlockPos entityPos = entity.SidedPos.AsBlockPos;
+            BlockPos entityPos = entity.Pos.AsBlockPos;
 
             if (GasConfig.Loaded.Explosions && (entity.IsOnFire || HasFire()))
             {
                 if (gasHandler.ShouldExplode(entityPos))
                 {
-                    (entity.World as IServerWorldAccessor).CreateExplosion(entity.ServerPos.AsBlockPos, EnumBlastType.RockBlast, 3, 3);
+                    (entity.World as IServerWorldAccessor).CreateExplosion(entity.Pos.AsBlockPos, EnumBlastType.RockBlast, 3, 3);
                 }
                 else if (gasHandler.IsVolatile(entityPos)) entity.Ignite();
             }
 
             if (GasConfig.Loaded.Acid && entity.FeetInLiquid)
             {
-                float acidAmount = gasHandler.GetAcidity(entity.ServerPos.AsBlockPos);
+                float acidAmount = gasHandler.GetAcidity(entity.Pos.AsBlockPos);
                 EntityPlayer player;
 
                 if (acidAmount > 0.35f && (player = entity as EntityPlayer) != null)
@@ -74,6 +74,8 @@ namespace AsphyxiaRebreathed
 
                 if (acidAmount > 0.9) entity.ReceiveDamage(new DamageSource() { Type = EnumDamageType.Poison }, 1);
             }
+
+            EmitBackpackSmolderGas(entityPos);
         }
 
         public override void OnEntityDeath(DamageSource damageSourceForDeath)
@@ -83,10 +85,10 @@ namespace AsphyxiaRebreathed
                 GasSystem gasHandler = entity.Api.ModLoader.GetModSystem<GasSystem>();
 
                 Dictionary<string, float> gases = new Dictionary<string, float>();
-                gases.Add("co2", 0.05f * gasHandler.GasSpreadBlockRadius);
-                gases.Add("co", 0.005f * gasHandler.GasSpreadBlockRadius);
+                gases.Add("carbondioxide", 0.05f * gasHandler.GasSpreadBlockRadius);
+                gases.Add("carbonmonoxide", 0.005f * gasHandler.GasSpreadBlockRadius);
 
-                gasHandler.QueueGasExchange(gases, entity.ServerPos.AsBlockPos);
+                gasHandler.QueueGasExchange(gases, entity.Pos.AsBlockPos);
             }
         }
 
@@ -99,6 +101,36 @@ namespace AsphyxiaRebreathed
             if (SelfStack != null && SelfStack.Collectible is BlockTorch && SelfStack.Block.LightHsv[2] > 0) return true;
 
             return false;
+        }
+
+        private void EmitBackpackSmolderGas(BlockPos entityPos)
+        {
+            if (!GasConfig.Loaded.Smoke || !GasConfig.Loaded.LitBackpackSmolderEmits || !(entity is EntityPlayer player)) return;
+
+            IInventory backpack = player.Player?.InventoryManager?.GetOwnInventory(GlobalConstants.backpackInvClassName);
+            if (backpack == null) return;
+
+            Dictionary<string, float> gases = new Dictionary<string, float>();
+
+            for (int i = 0; i < backpack.Count; i++)
+            {
+                ItemStack stack = backpack[i]?.Itemstack;
+                if (!IsLitSmolderStack(stack)) continue;
+
+                Dictionary<string, float> smolderGas = stack.ItemAttributes?["gassysSmolderGas"].AsObject(new Dictionary<string, float>());
+                if (smolderGas == null || smolderGas.Count < 1) continue;
+
+                GasHelper.MergeGasDicts(smolderGas, ref gases);
+            }
+
+            if (gases.Count > 0) gasHandler.QueueGasExchange(gases, entityPos);
+        }
+
+        private bool IsLitSmolderStack(ItemStack stack)
+        {
+            if (stack?.ItemAttributes?.IsTrue("gassysSmolderWhenLit") != true) return false;
+
+            return (stack.Block?.LightHsv[2] ?? 0) > 0;
         }
 
         public EntityBehaviorGas(Entity entity) : base(entity)

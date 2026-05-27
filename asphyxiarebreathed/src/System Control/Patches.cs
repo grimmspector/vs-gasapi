@@ -50,10 +50,19 @@ namespace AsphyxiaRebreathed
                     {
                         if (__instance.Behaviors[i] is EntityBehaviorBreathe)
                         {
-                            EntityBehavior air = new EntityBehaviorAir(entity);
+                            EntityBehaviorAir air = new EntityBehaviorAir(entity);
                             air.Initialize(properties, ___BehaviorsAsJsonObj[i]);
 
-                            __instance.Behaviors[i] = air;
+                            if (entity is EntityPlayer)
+                            {
+                                air.ComplementVanillaBreathing = true;
+                                entity.AddBehavior(air);
+                            }
+                            else
+                            {
+                                __instance.Behaviors[i] = air;
+                            }
+
                             break;
                         }
                     }
@@ -240,7 +249,7 @@ namespace AsphyxiaRebreathed
         static void Burn(Entity __instance, DamageSource damageSource)
         {
             if (damageSource?.Source != EnumDamageSource.Explosion) return;
-            if (GasConfig.Loaded.FlammableGas && __instance.Api.ModLoader.GetModSystem<GasSystem>().IsVolatile(__instance.ServerPos.AsBlockPos))
+            if (GasConfig.Loaded.FlammableGas && __instance.Api.ModLoader.GetModSystem<GasSystem>().IsVolatile(__instance.Pos.AsBlockPos))
             {
                 __instance.Ignite();
             }

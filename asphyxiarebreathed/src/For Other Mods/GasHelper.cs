@@ -323,12 +323,13 @@ namespace AsphyxiaRebreathed
             Cuboidi bounds = new Cuboidi(pos.X - radius, pos.Y - radius, pos.Z - radius, pos.X + radius, pos.Y + radius, pos.Z + radius);
             BlockPos curPos = pos.Copy();
             BlockFacing[] faces = BlockFacing.ALLFACES;
+            int chunksize = GlobalConstants.ChunkSize;
 
-            for (int x = bounds.MinX / blockAccessor.ChunkSize; x <= bounds.MaxX / blockAccessor.ChunkSize; x++)
+            for (int x = bounds.MinX / chunksize; x <= bounds.MaxX / chunksize; x++)
             {
-                for (int y = bounds.MinY / blockAccessor.ChunkSize; y <= bounds.MaxY / blockAccessor.ChunkSize; y++)
+                for (int y = bounds.MinY / chunksize; y <= bounds.MaxY / chunksize; y++)
                 {
-                    for (int z = bounds.MinZ / blockAccessor.ChunkSize; z <= bounds.MaxZ / blockAccessor.ChunkSize; z++)
+                    for (int z = bounds.MinZ / chunksize; z <= bounds.MaxZ / chunksize; z++)
                     {
                         IWorldChunk chunk = blockAccessor.GetChunk(x, y, z);
 
@@ -341,7 +342,7 @@ namespace AsphyxiaRebreathed
             }
             if (chunks.Count < 1) return result;
 
-            Vec3i originChunkVec = new Vec3i(pos.X / blockAccessor.ChunkSize, pos.Y / blockAccessor.ChunkSize, pos.Z / blockAccessor.ChunkSize);
+            Vec3i originChunkVec = new Vec3i(pos.X / chunksize, pos.Y / chunksize, pos.Z / chunksize);
             if (chunks[originChunkVec] == null) return null;
             checkQueue.Enqueue(pos.ToVec3i());
             markedPositions.Add(pos.Copy());
@@ -363,7 +364,7 @@ namespace AsphyxiaRebreathed
             while (checkQueue.Count > 0)
             {
                 Vec3i bpos = checkQueue.Dequeue();
-                Vec3i parentChunkVec = new Vec3i(bpos.X / blockAccessor.ChunkSize, bpos.Y / blockAccessor.ChunkSize, bpos.Z / blockAccessor.ChunkSize);
+                Vec3i parentChunkVec = new Vec3i(bpos.X / chunksize, bpos.Y / chunksize, bpos.Z / chunksize);
 
                 Block parent = null;
                 IWorldChunk parentChunk = chunks[parentChunkVec];
@@ -378,7 +379,7 @@ namespace AsphyxiaRebreathed
                     if (!bounds.Contains(curPos) || markedPositions.Contains(curPos)) continue;
                     if (curPos.Y < 0 || curPos.Y > blockAccessor.MapSizeY) continue;
 
-                    Vec3i curChunkVec = new Vec3i(curPos.X / blockAccessor.ChunkSize, curPos.Y / blockAccessor.ChunkSize, curPos.Z / blockAccessor.ChunkSize);
+                    Vec3i curChunkVec = new Vec3i(curPos.X / chunksize, curPos.Y / chunksize, curPos.Z / chunksize);
                     int chunkBid = toLocalIndex(curPos);
                     Block atPos = null;
                     IWorldChunk chunk = chunks[curChunkVec];
@@ -441,7 +442,9 @@ namespace AsphyxiaRebreathed
         //Gives the local index for a block in its chunk
         int toLocalIndex(BlockPos pos)
         {
-            return MapUtil.Index3d(pos.X % api.World.BlockAccessor.ChunkSize, pos.Y % api.World.BlockAccessor.ChunkSize, pos.Z % api.World.BlockAccessor.ChunkSize, api.World.BlockAccessor.ChunkSize, api.World.BlockAccessor.ChunkSize);
+            int chunksize = GlobalConstants.ChunkSize;
+
+            return MapUtil.Index3d(pos.X % chunksize, pos.Y % chunksize, pos.Z % chunksize, chunksize, chunksize);
         }
 
 

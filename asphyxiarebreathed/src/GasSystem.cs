@@ -23,6 +23,7 @@ namespace AsphyxiaRebreathed
         public static object spreadGasLock = new object();
         private Dictionary<BlockPos, Dictionary<string, float>> ExplosionQueue = new Dictionary<BlockPos, Dictionary<string, float>>();
         private Dictionary<Vec2i, Dictionary<string, double>> PollutionPerChunk = new Dictionary<Vec2i, Dictionary<string, double>>();
+        private Dictionary<BlockPos, GasSeepSource> GasSeeps = new Dictionary<BlockPos, GasSeepSource>();
         public int GasSpreadBlockRadius;
         EntityPartitioning entityUtil;
 
@@ -49,15 +50,18 @@ namespace AsphyxiaRebreathed
             try
             {
                 GasConfig FromDisk;
-                if ((FromDisk = api.LoadModConfig<GasConfig>("GasConfig.json")) == null)
+                if ((FromDisk = api.LoadModConfig<GasConfig>(GasConfig.ConfigPath)) == null)
                 {
-                    api.StoreModConfig<GasConfig>(GasConfig.Loaded, "GasConfig.json");
+                    FromDisk = api.LoadModConfig<GasConfig>(GasConfig.LegacyConfigPath);
                 }
-                else GasConfig.Loaded = FromDisk;
+
+                if (FromDisk != null) GasConfig.Loaded = FromDisk;
+
+                api.StoreModConfig<GasConfig>(GasConfig.Loaded, GasConfig.ConfigPath);
             }
             catch
             {
-                api.StoreModConfig<GasConfig>(GasConfig.Loaded, "GasConfig.json");
+                api.StoreModConfig<GasConfig>(GasConfig.Loaded, GasConfig.ConfigPath);
             }
 
             api.World.Config.SetBool("ARgasesEnabled", GasConfig.Loaded.GasesEnabled);
@@ -81,12 +85,14 @@ namespace AsphyxiaRebreathed
             api.RegisterBlockEntityBehaviorClass("BurningProduces", typeof(BlockEntityBehaviorBurningProduces));
             api.RegisterBlockEntityBehaviorClass("PlanterAbsorbs", typeof(BlockEntityBehaviorPlanterAbsorbs));
             api.RegisterBlockEntityBehaviorClass("ProduceGas", typeof(BlockEntityBehaviorProduceGas));
+            api.RegisterBlockEntityBehaviorClass("GasVent", typeof(BlockEntityBehaviorGasVent));
 
             GasSpreadBlockRadius = getBlockInRadius(GasConfig.Loaded.DefaultSpreadRadius);
             entityUtil = api.ModLoader.GetModSystem<EntityPartitioning>();
 
             harmony = new Harmony("com.grimm.asphyxiarebreathed");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
+            RealSmokeCompat.TryPatch(harmony, api);
         }
 
         public override void AssetsLoaded(ICoreAPI api)
@@ -131,80 +137,37 @@ namespace AsphyxiaRebreathed
                 .RegisterMessageType(typeof(ChunkGasData))
             ;
 
-            api.RegisterCommand("gassys", "Manipulates the gas system", "Gas System Check", (IServerPlayer player, int groupId, CmdArgs args) =>
-            {
-                string order = args.PopWord();
+            api.ChatCommands.Create("gassys")
+                .WithDescription("Manipulates the gas system")
+                .RequiresPlayer()
+                .RequiresPrivilege(Privilege.time)
+                .BeginSubCommand("queue")
+                    .HandleWith(args => RunGasCommand(args, "queue"))
+                .EndSubCommand()
+                .BeginSubCommand("reset")
+                    .HandleWith(args => RunGasCommand(args, "reset"))
+                .EndSubCommand()
+                .BeginSubCommand("find")
+                    .HandleWith(args => RunGasCommand(args, "find"))
+                .EndSubCommand()
+                .BeginSubCommand("stop")
+                    .HandleWith(args => RunGasCommand(args, "stop"))
+                .EndSubCommand()
+                .BeginSubCommand("start")
+                    .HandleWith(args => RunGasCommand(args, "start"))
+                .EndSubCommand()
+                .BeginSubCommand("cleanstart")
+                    .HandleWith(args => RunGasCommand(args, "cleanstart"))
+                .EndSubCommand()
+                .BeginSubCommand("toggle")
+                    .HandleWith(args => RunGasCommand(args, "toggle"))
+                .EndSubCommand()
+                .BeginSubCommand("pollution")
+                    .HandleWith(args => RunGasCommand(args, "pollution"))
+                .EndSubCommand();
 
-                switch(order)
-                {
-                    case "queue":
-                        player.SendMessage(GlobalConstants.GeneralChatGroup, "Current Queue Count: " + spreadGasQueue.Count, EnumChatType.CommandSuccess);
-                        break;
-                    case "reset":
-                        lock (spreadGasLock)
-                        {
-                            Dictionary<BlockPos, Dictionary<string, float>> backup = new Dictionary<BlockPos, Dictionary<string, float>>();
+            api.World.RegisterGameTickListener((dt) => {
 
-                            foreach (var pos in spreadGasQueue)
-                            {
-                                if (!backup.ContainsKey(pos.Key)) backup.Add(pos.Key, pos.Value);
-                            }
-
-                            spreadGasQueue = backup;
-                        }
-                        break;
-                    case "find":
-                        lock (spreadGasLock)
-                        {
-                            int count = 1;
-                            foreach (var pos in spreadGasQueue)
-                            {
-                                player.SendMessage(GlobalConstants.GeneralChatGroup, String.Format("Position {0} in queue: X: {1}, Y: {2}, Z: {3}", count, pos.Key.X, pos.Key.Y, pos.Key.Z), EnumChatType.CommandSuccess);
-                                count++;
-                            }
-                        }
-                        break;
-                    case "stop":
-                        gasSpreader.Stopping = true;
-                        break;
-                    case "start":
-                        gasSpreader.Stopping = false;
-                        gasSpreader.Start(spreadGasQueue);
-                        break;
-                    case "cleanstart":
-                        lock (spreadGasLock)
-                        {
-                            Dictionary<BlockPos, Dictionary<string, float>> backup = new Dictionary<BlockPos, Dictionary<string, float>>();
-
-                            foreach (var pos in spreadGasQueue)
-                            {
-                                if (!backup.ContainsKey(pos.Key)) backup.Add(pos.Key, pos.Value);
-                            }
-
-                            spreadGasQueue = backup;
-                        }
-                        gasSpreader.Stopping = false;
-                        gasSpreader.Start(spreadGasQueue);
-                        break;
-                    case "toggle":
-                        gasSpreader.Paused = !gasSpreader.Paused;
-                        break;
-                    case "pollution":
-                        Vec2i cpos = new Vec2i(player.Entity.ServerPos.AsBlockPos.X / 32, player.Entity.ServerPos.AsBlockPos.Z / 32);
-                        StringBuilder info = new StringBuilder();
-
-                        info.AppendLine(String.Format("Pollution in Chunk Column at positon X: {0}, Z: {1}", cpos.X, cpos.Y));
-                        if (PollutionPerChunk != null && PollutionPerChunk.ContainsKey(cpos))
-                            foreach (var gas in PollutionPerChunk[cpos]) info.AppendLine(Lang.Get("asphyxiarebreathed:gas-" + gas.Key) + ": " + gas.Value.ToString("#.#"));
-
-                        player.SendMessage(GlobalConstants.GeneralChatGroup, info.ToString(), EnumChatType.CommandSuccess);
-                        break;
-                }
-
-            }, Privilege.time);
-
-            api.World.RegisterGameTickListener((dt) => { 
-            
                 if (gasSpreader?.Stopping == true)
                 {
                     lock (spreadGasLock)
@@ -222,6 +185,84 @@ namespace AsphyxiaRebreathed
                     gasSpreader.Start(spreadGasQueue);
                 }
             }, 30);
+
+            api.World.RegisterGameTickListener(ProcessGasSeeps, 5000);
+        }
+
+        private TextCommandResult RunGasCommand(TextCommandCallingArgs args, string order)
+        {
+            IServerPlayer player = args.Caller.Player as IServerPlayer;
+            if (player == null) return TextCommandResult.Error("This command requires a server player.", "");
+
+            switch (order)
+            {
+                case "queue":
+                    player.SendMessage(GlobalConstants.GeneralChatGroup, "Current Queue Count: " + spreadGasQueue.Count, EnumChatType.CommandSuccess);
+                    break;
+                case "reset":
+                    lock (spreadGasLock)
+                    {
+                        Dictionary<BlockPos, Dictionary<string, float>> backup = new Dictionary<BlockPos, Dictionary<string, float>>();
+
+                        foreach (var pos in spreadGasQueue)
+                        {
+                            if (!backup.ContainsKey(pos.Key)) backup.Add(pos.Key, pos.Value);
+                        }
+
+                        spreadGasQueue = backup;
+                    }
+                    break;
+                case "find":
+                    lock (spreadGasLock)
+                    {
+                        int count = 1;
+                        foreach (var pos in spreadGasQueue)
+                        {
+                            player.SendMessage(GlobalConstants.GeneralChatGroup, String.Format("Position {0} in queue: X: {1}, Y: {2}, Z: {3}", count, pos.Key.X, pos.Key.Y, pos.Key.Z), EnumChatType.CommandSuccess);
+                            count++;
+                        }
+                    }
+                    break;
+                case "stop":
+                    gasSpreader.Stopping = true;
+                    break;
+                case "start":
+                    gasSpreader.Stopping = false;
+                    gasSpreader.Start(spreadGasQueue);
+                    break;
+                case "cleanstart":
+                    lock (spreadGasLock)
+                    {
+                        Dictionary<BlockPos, Dictionary<string, float>> backup = new Dictionary<BlockPos, Dictionary<string, float>>();
+
+                        foreach (var pos in spreadGasQueue)
+                        {
+                            if (!backup.ContainsKey(pos.Key)) backup.Add(pos.Key, pos.Value);
+                        }
+
+                        spreadGasQueue = backup;
+                    }
+                    gasSpreader.Stopping = false;
+                    gasSpreader.Start(spreadGasQueue);
+                    break;
+                case "toggle":
+                    gasSpreader.Paused = !gasSpreader.Paused;
+                    break;
+                case "pollution":
+                    BlockPos playerPos = player.Entity.Pos.AsBlockPos;
+                    int chunksize = GlobalConstants.ChunkSize;
+                    Vec2i cpos = new Vec2i(playerPos.X / chunksize, playerPos.Z / chunksize);
+                    StringBuilder info = new StringBuilder();
+
+                    info.AppendLine(String.Format("Pollution in Chunk Column at positon X: {0}, Z: {1}", cpos.X, cpos.Y));
+                    if (PollutionPerChunk != null && PollutionPerChunk.ContainsKey(cpos))
+                        foreach (var gas in PollutionPerChunk[cpos]) info.AppendLine(Lang.Get("asphyxiarebreathed:gas-" + gas.Key) + ": " + gas.Value.ToString("#.#"));
+
+                    player.SendMessage(GlobalConstants.GeneralChatGroup, info.ToString(), EnumChatType.CommandSuccess);
+                    break;
+            }
+
+            return TextCommandResult.Success("", null);
         }
 
         private void OnSpreadGasBus(string eventName, ref EnumHandling handling, IAttribute data)
@@ -241,6 +282,7 @@ namespace AsphyxiaRebreathed
         {
             spreadGasQueue = deserializeQueue("spreadGasQueue");
             PollutionPerChunk = deserializePollution("pollutionChunks");
+            GasSeeps = deserializeGasSeeps("gasSeeps");
             gasSpreader = new GasSpreadingThread(sapi, this);
             gasSpreader.Start(spreadGasQueue);
         }
@@ -251,6 +293,7 @@ namespace AsphyxiaRebreathed
             {
                 sapi.WorldManager.SaveGame.StoreData("spreadGasQueue", SerializerUtil.Serialize(spreadGasQueue));
                 sapi.WorldManager.SaveGame.StoreData("pollutionChunks", SerializerUtil.Serialize(PollutionPerChunk));
+                sapi.WorldManager.SaveGame.StoreData("gasSeeps", SerializerUtil.Serialize(GasSeeps));
             }
         }
 
@@ -288,6 +331,23 @@ namespace AsphyxiaRebreathed
             return new Dictionary<Vec2i, Dictionary<string, double>>();
         }
 
+        private Dictionary<BlockPos, GasSeepSource> deserializeGasSeeps(string name)
+        {
+            try
+            {
+                byte[] data = sapi.WorldManager.SaveGame.GetData(name);
+                if (data != null)
+                {
+                    return SerializerUtil.Deserialize<Dictionary<BlockPos, GasSeepSource>>(data);
+                }
+            }
+            catch (Exception e)
+            {
+                sapi.World.Logger.Error("Failed loading Gas Seeps.{0}. Resetting. Exception: {1}", name, e);
+            }
+            return new Dictionary<BlockPos, GasSeepSource>();
+        }
+
         private void onChunkData(ChunkGasData msg)
         {
             IWorldChunk chunk = api.World.BlockAccessor.GetChunk(msg.chunkX, msg.chunkY, msg.chunkZ);
@@ -299,7 +359,7 @@ namespace AsphyxiaRebreathed
 
         void saveGases(Dictionary<int, Dictionary<string, float>> gases, BlockPos pos)
         {
-            int chunksize = api.World.BlockAccessor.ChunkSize;
+            int chunksize = GlobalConstants.ChunkSize;
             int chunkX = pos.X / chunksize;
             int chunkY = pos.Y / chunksize;
             int chunkZ = pos.Z / chunksize;
@@ -387,12 +447,13 @@ namespace AsphyxiaRebreathed
         public Dictionary<string, float> GetGases(BlockPos pos)
         {
             Dictionary<int, Dictionary<string, float>> gasesOfChunk = getOrCreateGasesAt(pos);
-            if (gasesOfChunk == null) return null;
+            Dictionary<string, float> realSmokeGases = RealSmokeCompat.GetSmokeGasesAt(api.World, pos);
+            if (gasesOfChunk == null) return realSmokeGases;
 
             int index3d = toLocalIndex(pos);
-            if (!gasesOfChunk.ContainsKey(index3d)) return null;
+            if (!gasesOfChunk.ContainsKey(index3d)) return realSmokeGases;
 
-            return gasesOfChunk[index3d];
+            return RealSmokeCompat.MergeGasReports(gasesOfChunk[index3d], realSmokeGases);
         }
 
         public float GetGas(BlockPos pos, string name)
@@ -525,6 +586,115 @@ namespace AsphyxiaRebreathed
             return amount > GasDictionary[name].ToxicAt;
         }
 
+        public void ReleaseGasSeep(BlockPos pos)
+        {
+            if (pos == null || !GasSeeps.TryGetValue(pos, out GasSeepSource seep)) return;
+
+            QueueGasExchange(ScaleGasDict(seep.Gases, GasConfig.Loaded.OreSeepBreakMultiplier), pos);
+            GasSeeps.Remove(pos);
+        }
+
+        public void TryCreateGasSeep(IWorldAccessor world, Block sourceBlock, BlockPos pos, Dictionary<string, float> gases)
+        {
+            if (!GasConfig.Loaded.OreSeepsEnabled || world?.Side != EnumAppSide.Server || pos == null || gases == null || gases.Count < 1) return;
+            if (world.Rand.NextDouble() > GasConfig.Loaded.OreSeepChance) return;
+
+            string sourceType = GetSeepBlockType(sourceBlock);
+            if (sourceType == null) return;
+
+            Dictionary<string, float> seepGases = GetSeepGases(gases);
+            if (seepGases.Count < 1) return;
+
+            List<BlockPos> candidates = new List<BlockPos>();
+
+            foreach (BlockFacing face in BlockFacing.ALLFACES)
+            {
+                BlockPos checkPos = pos.AddCopy(face);
+                if (GasSeeps.ContainsKey(checkPos)) continue;
+
+                Block checkBlock = world.BlockAccessor.GetBlock(checkPos);
+                if (GetSeepBlockType(checkBlock) == sourceType) candidates.Add(checkPos);
+            }
+
+            if (candidates.Count < 1) return;
+
+            BlockPos seepPos = candidates[world.Rand.Next(candidates.Count)].Copy();
+            GasSeeps[seepPos] = new GasSeepSource()
+            {
+                BlockType = sourceType,
+                Gases = seepGases,
+                LastProduced = world.Calendar.TotalHours
+            };
+        }
+
+        private void ProcessGasSeeps(float dt)
+        {
+            if (!GasConfig.Loaded.OreSeepsEnabled || GasSeeps.Count < 1) return;
+
+            double totalHours = sapi.World.Calendar.TotalHours;
+
+            foreach (var entry in GasSeeps.ToArray())
+            {
+                Block block = sapi.World.BlockAccessor.GetBlock(entry.Key);
+                if (GetSeepBlockType(block) != entry.Value.BlockType)
+                {
+                    GasSeeps.Remove(entry.Key);
+                    continue;
+                }
+
+                if (totalHours - entry.Value.LastProduced < GasConfig.Loaded.OreSeepUpdateHours) continue;
+
+                entry.Value.LastProduced = totalHours;
+                QueueGasExchange(new Dictionary<string, float>(entry.Value.Gases), entry.Key);
+            }
+        }
+
+        private Dictionary<string, float> GetSeepGases(Dictionary<string, float> gases)
+        {
+            Dictionary<string, float> seepGases = new Dictionary<string, float>();
+
+            foreach (var gas in gases)
+            {
+                if (gas.Key == "coaldust" || gas.Key == "silicadust") continue;
+                if (gas.Key == "RADIUS" || gas.Key.StartsWith("THISISA") || gas.Key.StartsWith("IGNORE")) continue;
+                if (gas.Value <= 0) continue;
+
+                seepGases[gas.Key] = gas.Value * GasConfig.Loaded.OreSeepAmountMultiplier;
+            }
+
+            return seepGases;
+        }
+
+        private Dictionary<string, float> ScaleGasDict(Dictionary<string, float> gases, float multiplier)
+        {
+            Dictionary<string, float> result = new Dictionary<string, float>();
+            if (gases == null) return result;
+
+            foreach (var gas in gases)
+            {
+                result[gas.Key] = gas.Value * multiplier;
+            }
+
+            return result;
+        }
+
+        private string GetSeepBlockType(Block block)
+        {
+            string path = block?.Code?.Path;
+            if (path == null) return null;
+
+            string[] parts = path.Split('-');
+            if (parts.Length >= 3 && parts[0] == "ore")
+            {
+                string gradeOrType = parts[1];
+                if (gradeOrType == "poor" || gradeOrType == "medium" || gradeOrType == "rich" || gradeOrType == "bountiful") return "ore-" + parts[2];
+
+                return "ore-" + gradeOrType;
+            }
+
+            return block.Code.ToString();
+        }
+
         public void SetupExplosion(BlockPos pos, int radius)
         {
             if (pos == null || radius < 0) return;
@@ -569,7 +739,8 @@ namespace AsphyxiaRebreathed
         {
             if (pos == null || gas == null || value == 0) return;
 
-            Vec2i columm = new Vec2i(pos.X / api.World.BlockAccessor.ChunkSize, pos.Z / api.World.BlockAccessor.ChunkSize);
+            int chunksize = GlobalConstants.ChunkSize;
+            Vec2i columm = new Vec2i(pos.X / chunksize, pos.Z / chunksize);
 
             if (!PollutionPerChunk.ContainsKey(columm))
             {
@@ -741,7 +912,7 @@ namespace AsphyxiaRebreathed
                 HashSet<BlockPos>[] layers = new HashSet<BlockPos>[bounds.MaxY - bounds.MinY];
                 Dictionary<int, Block> blocks = new Dictionary<int, Block>();
                 float windspeed = -1;
-                int chunksize = blockAccessor.ChunkSize;
+                int chunksize = GlobalConstants.ChunkSize;
                 int totalBlockCount = 1;
                 bool openAir = false;
 
@@ -750,11 +921,11 @@ namespace AsphyxiaRebreathed
                     layers[i] = new HashSet<BlockPos>();
                 }
 
-                for (int x = bounds.MinX / blockAccessor.ChunkSize; x <= bounds.MaxX / blockAccessor.ChunkSize; x++)
+                for (int x = bounds.MinX / chunksize; x <= bounds.MaxX / chunksize; x++)
                 {
-                    for (int y = bounds.MinY / blockAccessor.ChunkSize; y <= bounds.MaxY / blockAccessor.ChunkSize; y++)
+                    for (int y = bounds.MinY / chunksize; y <= bounds.MaxY / chunksize; y++)
                     {
-                        for (int z = bounds.MinZ / blockAccessor.ChunkSize; z <= bounds.MaxZ / blockAccessor.ChunkSize; z++)
+                        for (int z = bounds.MinZ / chunksize; z <= bounds.MaxZ / chunksize; z++)
                         {
                             IWorldChunk chunk = blockAccessor.GetChunk(x, y, z);
 
@@ -788,7 +959,7 @@ namespace AsphyxiaRebreathed
                 originChunk.TakeGas(ref collectedGases, toLocalIndex(pos));
 
                 BlockFacing[] faces = BlockFacing.ALLFACES;
-                BlockPos curPos = new BlockPos();
+                BlockPos curPos = new BlockPos(pos.dimension);
 
                 while (checkQueue.Count > 0)
                 {
@@ -826,7 +997,7 @@ namespace AsphyxiaRebreathed
 
                         foreach (GasChunk chunk in chunks)
                         {
-                            if (chunk.Compare(curPos, blockAccessor.ChunkSize))
+                            if (chunk.Compare(curPos, chunksize))
                             {
                                 localArea = chunk;
                                 break;
@@ -921,11 +1092,11 @@ namespace AsphyxiaRebreathed
 
                             foreach (BlockPos pil in layers[i])
                             {
-                                if (localArea == null || !localArea.Compare(pil, blockAccessor.ChunkSize))
+                                if (localArea == null || !localArea.Compare(pil, chunksize))
                                 {
                                     foreach (GasChunk chunk in chunks)
                                     {
-                                        if (chunk.Compare(pil, blockAccessor.ChunkSize))
+                                        if (chunk.Compare(pil, chunksize))
                                         {
                                             localArea = chunk;
                                             break;
@@ -949,11 +1120,11 @@ namespace AsphyxiaRebreathed
 
                             foreach (BlockPos pil in layers[i])
                             {
-                                if (localArea == null || !localArea.Compare(pil, blockAccessor.ChunkSize))
+                                if (localArea == null || !localArea.Compare(pil, chunksize))
                                 {
                                     foreach (GasChunk chunk in chunks)
                                     {
-                                        if (chunk.Compare(pil, blockAccessor.ChunkSize))
+                                        if (chunk.Compare(pil, chunksize))
                                         {
                                             localArea = chunk;
                                             break;
@@ -981,11 +1152,11 @@ namespace AsphyxiaRebreathed
 
                             foreach (BlockPos pil in layers[i])
                             {
-                                if (localArea == null || !localArea.Compare(pil, blockAccessor.ChunkSize))
+                                if (localArea == null || !localArea.Compare(pil, chunksize))
                                 {
                                     foreach (GasChunk chunk in chunks)
                                     {
-                                        if (chunk.Compare(pil, blockAccessor.ChunkSize))
+                                        if (chunk.Compare(pil, chunksize))
                                         {
                                             localArea = chunk;
                                             break;

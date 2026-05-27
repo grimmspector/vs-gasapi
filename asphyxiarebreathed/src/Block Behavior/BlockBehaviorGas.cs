@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 
 namespace AsphyxiaRebreathed
@@ -11,20 +10,12 @@ namespace AsphyxiaRebreathed
         public override string GetPlacedBlockInfo(IWorldAccessor world, BlockPos pos, IPlayer forPlayer)
         {
             if (!GasConfig.Loaded.GasesDebugEnabled) return null;
-            StringBuilder dsc = new StringBuilder();
-            dsc.AppendLine("Gases at Position:");
             GasSystem gasworks = world.Api.ModLoader.GetModSystem<GasSystem>();
             if (gasworks == null) return null;
 
             Dictionary<string, float> gasesHere = gasworks.GetGases(pos);
-
-            if (gasesHere == null || gasesHere.Count < 1) return null;
-
-            foreach (var gas in gasesHere)
-            {
-                string name = Lang.GetIfExists("asphyxiarebreathed:gas-" + gas.Key) ?? gas.Key;
-                dsc.AppendLine(name + " : " + (gas.Value * 100).ToString("0.0") + "%");
-            }
+            StringBuilder dsc = new StringBuilder();
+            if (!GasDebugInfo.AppendGasList(dsc, "Gases at Position:", gasesHere)) return null;
 
             return dsc.ToString();
         }

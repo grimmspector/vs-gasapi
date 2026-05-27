@@ -25,7 +25,7 @@ namespace AsphyxiaRebreathed
         {
             base.Initialize(api, properties);
             gasHandler = api.ModLoader.GetModSystem<GasSystem>();
-            produceGas = properties["produceGas"].AsObject(new Dictionary<string, float>());
+            produceGas = GasSourceProperties.GetProduceGas(properties, Blockentity.Block);
             updateTimeInMS = properties["updateMS"].AsInt(10000);
             updateTimeInHours = properties["updateHours"].AsDouble();
             Blockentity.RegisterGameTickListener(ProduceGas, updateTimeInMS);
