@@ -15,6 +15,7 @@ namespace AsphyxiaRebreathed
     {
         const string OxygenTreeName = "oxygen";
         const string LegacyAirTreeName = "air";
+        const string ComplementTreeName = "asphyxiaair";
         const string CurrentOxygenKey = "currentoxygen";
         const string MaxOxygenKey = "maxoxygen";
         const string BaseMaxOxygenKey = "basemaxoxygen";
@@ -81,6 +82,13 @@ namespace AsphyxiaRebreathed
             vanillaBreathe = entity.GetBehavior<EntityBehaviorBreathe>();
             timer = entity.World.Calendar.TotalHours;
             waterBreather = typeAttributes.IsTrue("waterBreather");
+
+            if (UsesVanillaBreathing)
+            {
+                InitializeVanillaComplementState();
+                return;
+            }
+
             airTree = entity.WatchedAttributes.GetTreeAttribute(OxygenTreeName);
 
             if (airTree == null)
@@ -102,6 +110,27 @@ namespace AsphyxiaRebreathed
 
 
             UpdateMaxAir();
+        }
+
+        private void InitializeVanillaComplementState()
+        {
+            // Keep mod-only gas effects out of vanilla's oxygen tree.
+            airTree = entity.WatchedAttributes.GetTreeAttribute(ComplementTreeName);
+
+            if (airTree == null)
+            {
+                entity.WatchedAttributes.SetAttribute(ComplementTreeName, airTree = new TreeAttribute());
+            }
+
+            if (InSystem == null) InSystem = new string[0];
+
+            // Older companion logic could shrink vanilla oxygen to the legacy 15-ish scale.
+            if (vanillaBreathe.MaxOxygen <= 100)
+            {
+                vanillaBreathe.MaxOxygen = entity.World.Config.GetAsInt("lungCapacity", 40000);
+                vanillaBreathe.Oxygen = vanillaBreathe.MaxOxygen;
+                vanillaBreathe.HasAir = true;
+            }
         }
 
         private TreeAttribute ConvertLegacyAirTree(ITreeAttribute legacyTree)
@@ -260,7 +289,14 @@ namespace AsphyxiaRebreathed
                 atmosphere.QueueGasExchange(exhaust, entity.Pos.AsBlockPos);
             }
 
-            if (EntityUnderwater() || HasScubaSet())
+            if (HasScubaSet())
+            {
+                vanillaBreathe.HasAir = true;
+                heldVanillaAir = false;
+                return;
+            }
+
+            if (EntityUnderwater())
             {
                 heldVanillaAir = false;
                 return;

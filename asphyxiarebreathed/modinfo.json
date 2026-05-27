@@ -4,7 +4,7 @@
   "name": "Asphyxia: Rebreathed",
   "authors": ["GrimmSpector"],
   "description": "Adds a gas system",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "dependencies": {
     "game": "1.22.2"
   }

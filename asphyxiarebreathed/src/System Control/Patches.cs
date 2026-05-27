@@ -51,15 +51,16 @@ namespace AsphyxiaRebreathed
                         if (__instance.Behaviors[i] is EntityBehaviorBreathe)
                         {
                             EntityBehaviorAir air = new EntityBehaviorAir(entity);
-                            air.Initialize(properties, ___BehaviorsAsJsonObj[i]);
 
                             if (entity is EntityPlayer)
                             {
                                 air.ComplementVanillaBreathing = true;
+                                air.Initialize(properties, ___BehaviorsAsJsonObj[i]);
                                 entity.AddBehavior(air);
                             }
                             else
                             {
+                                air.Initialize(properties, ___BehaviorsAsJsonObj[i]);
                                 __instance.Behaviors[i] = air;
                             }
 
