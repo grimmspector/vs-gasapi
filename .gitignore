@@ -1,43 +1,61 @@
 # Build output
 Build/
-bin/
-obj/
 CakeBuild/bin/
 CakeBuild/obj/
+bin/
+obj/
 asphyxiarebreathed/bin/
 asphyxiarebreathed/obj/
-asphyxiarebreathed/assets/asphyxiarebreathed/moddb/
+artifacts/
+[Dd]ebug/
+[Rr]elease/
+[Rr]eleases/
 *.dll
 *.pdb
-*.dbg
 *.mdb
+*.dbg
 *.deps.json
 *.zip
+
+# Release staging
 Releases/
-Debug/
-debug/
+asphyxiarebreathed/assets/asphyxiarebreathed/moddb/
+metadata.json
 debug.log
 
 # Visual Studio and .NET local state
 .vs/
 .vs.backup-*/
 .dotnetcli/
-*.user
+*.rsuser
 *.suo
+*.user
 *.userosscache
 *.sln.docstates
+*.sln.iml
 
-.agents/
-.tmp/
-AGENTS.local.md
+# Editor and tool caches
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+.idea/**/contentModel.xml
 
-# Local logs and temporary files
+# Logs and temporary files
 *.log
 *.tmp
 *.temp
 *.bak
 *.orig
 *.swp
+*.cache
+*.binlog
 Thumbs.db
 Desktop.ini
-
