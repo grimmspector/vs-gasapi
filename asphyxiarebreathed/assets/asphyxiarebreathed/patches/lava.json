@@ -1,0 +1,36 @@
+[
+  {
+    "op": "add",
+    "path": "/entityBehaviors",
+    "value": [
+      {
+        "name": "GasVent",
+        "properties": {
+          "produceGasByType": {
+            "lava-still-7": { "carbondioxide": 0.01, "sulfurdioxide": 0.001 }
+          },
+          "updateMS": 30000,
+          "updateHours": 0.25,
+          "requireSkyless": false,
+          "requireAdjacentAir": true,
+          "ignoreLiquids": true
+        }
+      },
+      {
+        "name": "GasVent",
+        "properties": {
+          "produceGasByType": {
+            "lava-still-7": { "hydrogensulfide": 0.001 }
+          },
+          "updateMS": 30000,
+          "updateHours": 0.5,
+          "requireSkyless": true,
+          "requireAdjacentAir": true,
+          "ignoreLiquids": true
+        }
+      }
+    ],
+    "file": "game:blocktypes/liquid/lava.json",
+    "condition": { "when": "ARLavaVentsEnabled", "isValue": "true" }
+  }
+]

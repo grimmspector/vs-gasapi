@@ -27,6 +27,8 @@ namespace AsphyxiaRebreathed
 
         public bool OreSeepsEnabled { get; set; } = false;
 
+        public bool LavaVents { get; set; } = false;
+
         public float OreSeepChance { get; set; } = 0.05f;
 
         public float OreSeepAmountMultiplier { get; set; } = 0.05f;

@@ -65,6 +65,7 @@ namespace AsphyxiaRebreathed
             }
 
             api.World.Config.SetBool("ARgasesEnabled", GasConfig.Loaded.GasesEnabled);
+            api.World.Config.SetBool("ARLavaVentsEnabled", GasConfig.Loaded.GasesEnabled && GasConfig.Loaded.LavaVents);
         }
 
         public override void Start(ICoreAPI api)
