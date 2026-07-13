@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "repository": "asphyxiarebreathed",
+  "modId": "asphyxiarebreathed",
+  "modName": "Asphyxia: Rebreathed",
+  "version": "1.2.0",
+  "generatedAt": "2026-07-11T02:25:42.308Z",
+  "surfaces": {
+    "assetCodes": [],
+    "classRegistrations": [
+      "RegisterBlockClass:BlockGas"
+    ],
+    "serializedAttributes": [
+      "amount",
+      "carbonContent",
+      "deactivated",
+      "despawning",
+      "unburntContent"
+    ],
+    "moddataKeys": [
+      "gases"
+    ],
+    "remaps": []
+  }
+}

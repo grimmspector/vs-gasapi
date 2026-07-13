@@ -1,0 +1,64 @@
+[
+  {
+    "op": "add",
+    "path": "/entityBehaviors",
+    "value": [
+      {
+        "name": "PlanterAbsorbs"
+      }
+    ],
+    "file": "game:blocktypes/clay/fired/planter.json",
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
+  },
+  {
+    "op": "add",
+    "path": "/entityBehaviors",
+    "value": [
+      {
+        "name": "PlanterAbsorbs"
+      }
+    ],
+    "file": "game:blocktypes/clay/fired/flowerpot.json",
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" }
+  },
+
+  {
+    "op": "add",
+    "path": "/attributes",
+    "value": {
+      "gassysPlant": false
+    },
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" },
+    "file": "game:blocktypes/creature/glowworms.json"
+  },
+  {
+    "op": "add",
+    "path": "/attributes/gassysPlant",
+    "value": false,
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" },
+    "file": "game:blocktypes/plant/hay.json"
+  },
+  {
+    "op": "add",
+    "path": "/attributes/gassysPlant",
+    "value": false,
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" },
+    "file": "game:blocktypes/plant/mushroom.json"
+  },
+  {
+    "op": "add",
+    "path": "/attributes/gassysPlant",
+    "value": false,
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" },
+    "file": "game:blocktypes/plant/mushroom-side.json"
+  },
+  {
+    "op": "add",
+    "path": "/attributes",
+    "value": {
+      "gassysPlant": true,
+    },
+    "condition": { "when": "ARgasesEnabled", "isValue": "true" },
+    "file": "game:blocktypes/plant/aquatic/seaweed.json"
+  },
+]

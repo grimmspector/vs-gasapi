@@ -39,7 +39,7 @@ namespace AsphyxiaRebreathed
 
             Chunk.SetModdata("gases", data);
             // Todo: Send only to players that have this chunk in their loaded range
-            serverChannel.BroadcastPacket(new ChunkGasData() { chunkX = X, chunkY = Y, chunkZ = Z, Data = data });
+            serverChannel?.BroadcastPacket(new ChunkGasData() { chunkX = X, chunkY = Y, chunkZ = Z, Data = data });
         }
 
         public void TakeGas(ref Dictionary<string, float> taker, int point)
@@ -48,6 +48,8 @@ namespace AsphyxiaRebreathed
             
             Dictionary<string, float> takeFrom = Gases[point];
             if (takeFrom == null || takeFrom.Count < 1) return;
+
+            if (taker == null) taker = new Dictionary<string, float>();
 
             foreach (var gas in takeFrom)
             {

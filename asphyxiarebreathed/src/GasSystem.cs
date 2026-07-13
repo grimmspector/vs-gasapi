@@ -910,7 +910,7 @@ namespace AsphyxiaRebreathed
                 Queue<Vec3i> checkQueue = new Queue<Vec3i>();
                 List<GasChunk> chunks = new List<GasChunk>();
                 Cuboidi bounds = new Cuboidi(pos.X - radius, pos.Y - radius, pos.Z - radius, pos.X + radius, pos.Y + radius, pos.Z + radius);
-                HashSet<BlockPos>[] layers = new HashSet<BlockPos>[bounds.MaxY - bounds.MinY];
+                HashSet<BlockPos>[] layers = new HashSet<BlockPos>[bounds.MaxY - bounds.MinY + 1];
                 Dictionary<int, Block> blocks = new Dictionary<int, Block>();
                 float windspeed = -1;
                 int chunksize = GlobalConstants.ChunkSize;
@@ -979,9 +979,10 @@ namespace AsphyxiaRebreathed
                         }
                     }
 
-                    if (!blocks.ContainsKey(parentChunk.Chunk.UnpackAndReadBlock(toLocalIndex(bpos.AsBlockPos), BlockLayersAccess.Default))) continue;
+                    if (parentChunk == null) continue;
 
-                    parent = blocks[parentChunk.Chunk.UnpackAndReadBlock(toLocalIndex(bpos.AsBlockPos), BlockLayersAccess.Default)];
+                    int parentBlockId = parentChunk.Chunk.UnpackAndReadBlock(toLocalIndex(bpos.AsBlockPos), BlockLayersAccess.Default);
+                    if (!TryResolveBlock(parentBlockId, blocks, out parent)) continue;
 
                     //Process Children
                     foreach (BlockFacing facing in faces)
@@ -1009,14 +1010,14 @@ namespace AsphyxiaRebreathed
 
                         int blockId = localArea.Chunk.UnpackAndReadBlock(toLocalIndex(curPos), BlockLayersAccess.Default);
 
-                        if (!blocks.TryGetValue(blockId, out atPos)) atPos = blocks[blockId] = blockAccessor.GetBlock(blockId);
+                        if (!TryResolveBlock(blockId, blocks, out atPos)) continue;
 
                         if (!ignoreCheck && SolidCheck(atPos, facing.Opposite)) continue;
                         bool mediumComp = ignoreLiquid || !atPos.IsLiquid() || (parent.IsLiquid() && atPos.IsLiquid());
                         if (!mediumComp) continue;
 
                         //Confirmed this is a valid pos, now check other things
-                        localArea.TakeGas(ref adds, chunkBid);
+                        localArea.TakeGas(ref collectedGases, chunkBid);
 
                         if (blockAccessor.GetRainMapHeightAt(curPos) < curPos.Y)
                         {
@@ -1105,6 +1106,8 @@ namespace AsphyxiaRebreathed
                                     }
                                 }
 
+                                if (localArea == null) continue;
+
                                 localArea.SetGas(gas.Key, giveaway, toLocalIndex(pil));
                             }
                         }
@@ -1132,6 +1135,8 @@ namespace AsphyxiaRebreathed
                                         }
                                     }
                                 }
+
+                                if (localArea == null) continue;
 
                                 localArea.SetGas(gas.Key, giveaway, toLocalIndex(pil));
                             }
@@ -1165,6 +1170,8 @@ namespace AsphyxiaRebreathed
                                     }
                                 }
 
+                                if (localArea == null) continue;
+
                                 localArea.SetGas(gas.Key, giveaway, toLocalIndex(pil));
                             }
 
@@ -1189,6 +1196,17 @@ namespace AsphyxiaRebreathed
                 }
 
                 return block.SideSolid[face.Index];
+            }
+
+            private bool TryResolveBlock(int blockId, Dictionary<int, Block> blocks, out Block block)
+            {
+                if (blocks.TryGetValue(blockId, out block)) return block != null;
+
+                block = blockAccessor.GetBlock(blockId);
+                if (block == null) return false;
+
+                blocks[blockId] = block;
+                return true;
             }
 
             public bool IsPlant(Block block)
